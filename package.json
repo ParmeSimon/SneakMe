@@ -1,7 +1,9 @@
 {
-  "name": "nuxt-app",
+  "name": "jin-ai",
   "private": true,
   "type": "module",
+  "version": "0.1.0",
+  "author": "voxymore-devteams",
   "scripts": {
     "build": "nuxt build",
     "dev": "nuxt dev",
@@ -10,10 +12,30 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
-    "@nuxt/ui": "^3.0.2",
-    "nuxt": "^3.16.2",
-    "typescript": "^5.8.3",
-    "vue": "^3.5.13",
-    "vue-router": "^4.5.0"
+    "@daypilot/daypilot-lite-vue": "^3.32.1",
+    "@nuxt/ui": "^2.21.0",
+    "@nuxtjs/color-mode": "^3.5.2",
+    "@nuxtjs/tailwindcss": "^6.11.4",
+    "@pinia/nuxt": "^0.9.0",
+    "@tanstack/vue-table": "^8.20.5",
+    "@vueuse/core": "^10.11.1",
+    "axios": "^1.8.3",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "daypilot-pro-vue": "https://npm.daypilot.org/daypilot-pro-vue/trial/2024.4.6243.tar.gz",
+    "echarts": "^5.6.0",
+    "lucide-vue-next": "^0.474.0",
+    "nodemon": "^3.1.9",
+    "nuxt": "^3.15.4",
+    "pinia": "^2.3.1",
+    "radix-vue": "^1.9.13",
+    "shadcn-nuxt": "^0.9.0",
+    "tailwind-merge": "^2.6.0",
+    "tailwindcss-animate": "^1.0.7",
+    "vue-router": "^4.5.0",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
   }
 }
