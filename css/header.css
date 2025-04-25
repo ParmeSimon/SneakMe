@@ -1,0 +1,22 @@
+.button {
+    width: 100%;
+    text-align: left;
+    padding: 25px 20px;
+    border: none;
+    cursor: pointer;
+    background-color: #0866FF;
+    color: white;
+}
+
+.button-active {
+    background-color: #0155dc;
+}
+
+.header{
+    display: flex;
+    height: calc(100vh);
+    flex-direction: column;
+    width: 150px;
+    position: fixed;
+    background-color: #0866FF;
+}
