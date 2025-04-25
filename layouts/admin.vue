@@ -1,7 +1,16 @@
 <script setup>
 </script>
 
-<template>
-    <slot>
-    </slot>
+<template class="test">
+  <AdminHeader />
+  <div class="content">
+    <slot></slot>
+  </div>
 </template>
+
+<style scoped>
+.content {
+  margin-left: 150px;
+}
+
+</style>
