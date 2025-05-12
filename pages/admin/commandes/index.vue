@@ -156,7 +156,7 @@ onMounted(() => {
               <img :src="produit.url_image" :alt="produit.title" class="produit-image">
               <div class="produit-details">
                 <div class="produit-title">{{ produit.title }}</div>
-                <div class="produit-price">{{ produit.price }} €</div>
+                <div class="produit-price">{{ produit.price/100 }} €</div>
               </div>
             </div>
           </div>

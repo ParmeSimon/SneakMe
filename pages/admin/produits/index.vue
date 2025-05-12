@@ -88,6 +88,64 @@ const productToEdit = ref({
   id_sexe: ''
 })
 
+// Gestion des images
+const newImageFile = ref(null)
+const editImageFile = ref(null)
+const imagePreview = ref('')
+const editImagePreview = ref('')
+
+// Fonction pour gérer le changement d'image (ajout)
+const handleImageChange = (event) => {
+  const file = event.target.files[0]
+  if (file) {
+    newImageFile.value = file
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      imagePreview.value = e.target.result
+    }
+    reader.readAsDataURL(file)
+  }
+}
+
+// Fonction pour gérer le changement d'image (édition)
+const handleEditImageChange = (event) => {
+  const file = event.target.files[0]
+  if (file) {
+    editImageFile.value = file
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      editImagePreview.value = e.target.result
+    }
+    reader.readAsDataURL(file)
+  }
+}
+
+// Fonction pour télécharger l'image
+const uploadImage = async (file) => {
+  if (!file) return null
+  
+  const formData = new FormData()
+  formData.append('image', file)
+  
+  try {
+    const response = await fetch('http://localhost/SneakMe/api/upload.php', {
+      method: 'POST',
+      body: formData
+    })
+    
+    const result = await response.json()
+    
+    if (response.ok && result.success) {
+      return result.url
+    } else {
+      throw new Error(result.message || 'Erreur lors du téléchargement de l\'image')
+    }
+  } catch (error) {
+    console.error('Erreur lors du téléchargement:', error)
+    throw error
+  }
+}
+
 // Fonction pour préparer l'édition d'un produit
 const editProduct = (product) => {
   console.log("Produit original:", product);
@@ -105,6 +163,10 @@ const editProduct = (product) => {
     id_sexe: Number(product.id_sexe)
   }
   
+  // Réinitialiser l'image d'édition
+  editImageFile.value = null
+  editImagePreview.value = product.url_image
+  
   console.log("ProductToEdit après conversion:", productToEdit.value);
 }
 
@@ -114,6 +176,21 @@ const updateProduct = async () => {
     formStatus.value.loading = true
     formStatus.value.message = ''
     formStatus.value.isError = false
+    
+    // Télécharger l'image si une nouvelle a été sélectionnée
+    if (editImageFile.value) {
+      try {
+        const imageUrl = await uploadImage(editImageFile.value)
+        if (imageUrl) {
+          productToEdit.value.url_image = imageUrl
+        }
+      } catch (error) {
+        formStatus.value.message = 'Erreur lors du téléchargement de l\'image: ' + error.message
+        formStatus.value.isError = true
+        formStatus.value.loading = false
+        return
+      }
+    }
     
     // S'assurer que les IDs sont des nombres
     const dataToSend = {
@@ -207,6 +284,21 @@ const submitProduct = async () => {
     formStatus.value.message = ''
     formStatus.value.isError = false
     
+    // Télécharger l'image si disponible
+    if (newImageFile.value) {
+      try {
+        const imageUrl = await uploadImage(newImageFile.value)
+        if (imageUrl) {
+          newProduct.value.url_image = imageUrl
+        }
+      } catch (error) {
+        formStatus.value.message = 'Erreur lors du téléchargement de l\'image: ' + error.message
+        formStatus.value.isError = true
+        formStatus.value.loading = false
+        return
+      }
+    }
+    
     const response = await fetch('http://localhost/SneakMe/api/produits.php', {
       method: 'POST',
       headers: {
@@ -236,6 +328,8 @@ const submitProduct = async () => {
         id_categorie: '',
         id_sexe: ''
       }
+      newImageFile.value = null
+      imagePreview.value = ''
       
       // Fermer le modal après 1 seconde
       setTimeout(() => {
@@ -287,7 +381,7 @@ const submitProduct = async () => {
               <input type="text" class="form-control" id="title" v-model="newProduct.title" required>
             </div>
             <div class="col-md-6 mb-3">
-              <label for="price" class="form-label">Prix</label>
+              <label for="price" class="form-label">Prix (en centimes)</label>
               <input type="number" step="0.01" class="form-control" id="price" v-model="newProduct.price" required>
             </div>
           </div>
@@ -298,8 +392,16 @@ const submitProduct = async () => {
           </div>
           
           <div class="mb-3">
-            <label for="url_image" class="form-label">URL de l'image</label>
-            <input type="text" class="form-control" id="url_image" v-model="newProduct.url_image" required>
+            <label class="form-label">Image du produit</label>
+            <input type="file" class="form-control" id="image" accept="image/*" @change="handleImageChange">
+            <div v-if="imagePreview" class="mt-2">
+              <img :src="imagePreview" alt="Aperçu" class="img-thumbnail" style="max-height: 200px;">
+            </div>
+          </div>
+          
+          <div class="mb-3">
+            <label for="url_image" class="form-label">URL de l'image (optionnel si image téléchargée)</label>
+            <input type="text" class="form-control" id="url_image" v-model="newProduct.url_image">
           </div>
           
           <div class="row">
@@ -371,7 +473,7 @@ const submitProduct = async () => {
               <input type="text" class="form-control" id="edit-title" v-model="productToEdit.title" required>
             </div>
             <div class="col-md-6 mb-3">
-              <label for="edit-price" class="form-label">Prix</label>
+              <label for="edit-price" class="form-label">Prix (en centimes)</label>
               <input type="number" step="0.01" class="form-control" id="edit-price" v-model="productToEdit.price" required>
             </div>
           </div>
@@ -382,11 +484,16 @@ const submitProduct = async () => {
           </div>
           
           <div class="mb-3">
-            <label for="edit-url_image" class="form-label">URL de l'image</label>
-            <input type="text" class="form-control" id="edit-url_image" v-model="productToEdit.url_image" required>
+            <label class="form-label">Image du produit</label>
+            <input type="file" class="form-control" id="edit-image" accept="image/*" @change="handleEditImageChange">
             <div class="mt-2">
-              <img :src="productToEdit.url_image" alt="Aperçu" class="img-thumbnail" style="max-height: 100px;">
+              <img :src="editImagePreview || productToEdit.url_image" alt="Aperçu" class="img-thumbnail" style="max-height: 200px;">
             </div>
+          </div>
+          
+          <div class="mb-3">
+            <label for="edit-url_image" class="form-label">URL de l'image (optionnel si image téléchargée)</label>
+            <input type="text" class="form-control" id="edit-url_image" v-model="productToEdit.url_image">
           </div>
           
           <div class="row">
