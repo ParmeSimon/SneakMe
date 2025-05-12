@@ -1,0 +1,28 @@
+/* Styles de couleurs prioritaires pour SneakMe */
+:root {
+  --color-primary-50: 239 246 255 !important;
+  --color-primary-100: 219 234 254 !important;
+  --color-primary-200: 191 219 254 !important;
+  --color-primary-300: 147 197 253 !important;
+  --color-primary-400: 96 165 250 !important;
+  --color-primary-500: 59 130 246 !important;
+  --color-primary-600: 37 99 235 !important;
+  --color-primary-700: 29 78 216 !important;
+  --color-primary-800: 30 64 175 !important;
+  --color-primary-900: 30 58 138 !important;
+  --color-primary-950: 23 37 84 !important;
+  --color-primary-DEFAULT: var(--color-primary-500) !important;
+
+  --color-secondary-50: 250 245 255 !important;
+  --color-secondary-100: 243 232 255 !important;
+  --color-secondary-200: 233 213 255 !important;
+  --color-secondary-300: 216 180 254 !important;
+  --color-secondary-400: 192 132 252 !important;
+  --color-secondary-500: 168 85 247 !important;
+  --color-secondary-600: 147 51 234 !important;
+  --color-secondary-700: 126 34 206 !important;
+  --color-secondary-800: 107 33 168 !important;
+  --color-secondary-900: 88 28 135 !important;
+  --color-secondary-950: 59 7 100 !important;
+  --color-secondary-DEFAULT: var(--color-secondary-500) !important;
+}

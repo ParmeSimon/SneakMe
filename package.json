@@ -1,9 +1,9 @@
 {
-  "name": "jin-ai",
+  "name": "dzdqz",
   "private": true,
   "type": "module",
   "version": "0.1.0",
-  "author": "voxymore-devteams",
+  "author": "dzqdqz",
   "scripts": {
     "build": "nuxt build",
     "dev": "nuxt dev",
@@ -24,6 +24,7 @@
     "clsx": "^2.1.1",
     "daypilot-pro-vue": "https://npm.daypilot.org/daypilot-pro-vue/trial/2024.4.6243.tar.gz",
     "echarts": "^5.6.0",
+    "groq-sdk": "^0.20.1",
     "lucide-vue-next": "^0.474.0",
     "nodemon": "^3.1.9",
     "nuxt": "^3.15.4",
