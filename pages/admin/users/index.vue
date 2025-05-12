@@ -1,6 +1,11 @@
 <script setup>
 import {ref, h} from "vue";
 import '~/css/admin.css'
+import '~/css/users.css'
+// Import the modal components
+import AddUserModal from '~/components/modal/AddUserModal.vue'
+import EditUserModal from '~/components/modal/EditUserModal.vue'
+
 definePageMeta({
   layout: 'admin'
 })
@@ -45,6 +50,16 @@ const formStatus = ref({
   loading: false,
   message: '',
   isError: false
+})
+
+// Nouvel utilisateur
+const newUser = ref({
+  username: '',
+  prenom: '',
+  nom: '',
+  email: '',
+  password: '',
+  isAdmin: 0
 })
 
 // Fonction pour rafraîchir la liste des utilisateurs
@@ -135,16 +150,6 @@ const deleteUser = async (user) => {
   }
 }
 
-// Nouvel utilisateur
-const newUser = ref({
-  username: '',
-  prenom: '',
-  nom: '',
-  email: '',
-  password: '',
-  isAdmin: 0
-})
-
 // Fonction pour soumettre le formulaire
 const submitUser = async () => {
   try {
@@ -202,122 +207,16 @@ const submitUser = async () => {
     <UTable class="u-table" :data="data" :columns="columns" />
   </div>
 
-<!-- Modal -->
-<div class="modal fade" id="userModal" tabindex="-1" aria-labelledby="userModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h1 class="modal-title fs-5" id="userModalLabel">Ajouter un utilisateur</h1>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <!-- Message de statut -->
-        <div v-if="formStatus.message" :class="['alert', formStatus.isError ? 'alert-danger' : 'alert-success']">
-          {{ formStatus.message }}
-        </div>
-        <form @submit.prevent="submitUser">
-          <div class="mb-3">
-            <label for="username" class="form-label">Pseudo</label>
-            <input type="text" class="form-control" id="username" v-model="newUser.username" required>
-          </div>
-          <div class="mb-3">
-            <label for="prenom" class="form-label">Prénom</label>
-            <input type="text" class="form-control" id="prenom" v-model="newUser.prenom" required>
-          </div>
-          <div class="mb-3">
-            <label for="nom" class="form-label">Nom</label>
-            <input type="text" class="form-control" id="nom" v-model="newUser.nom" required>
-          </div>
-          <div class="mb-3">
-            <label for="email" class="form-label">Email</label>
-            <input type="email" class="form-control" id="email" v-model="newUser.email" required>
-          </div>
-          <div class="mb-3">
-            <label for="password" class="form-label">Mot de passe</label>
-            <input type="password" class="form-control" id="password" v-model="newUser.password" required>
-          </div>
-          <div class="mb-3 form-check form-switch">
-            <input class="form-check-input" type="checkbox" id="isAdmin" v-model="newUser.isAdmin" true-value="1" false-value="0">
-            <label class="form-check-label" for="isAdmin">Administrateur</label>
-          </div>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button type="button" id="closeUserModal" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-        <button type="button" class="btn btn-primary" @click="submitUser" :disabled="formStatus.loading">
-          <span v-if="formStatus.loading" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-          Enregistrer
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Modal d'édition -->
-<div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h1 class="modal-title fs-5" id="editUserModalLabel">Modifier un utilisateur</h1>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <!-- Message de statut -->
-        <div v-if="formStatus.message" :class="['alert', formStatus.isError ? 'alert-danger' : 'alert-success']">
-          {{ formStatus.message }}
-        </div>
-        
-        <form @submit.prevent="updateUser">
-          <div class="mb-3">
-            <label for="edit-username" class="form-label">Pseudo</label>
-            <input type="text" class="form-control" id="edit-username" v-model="userToEdit.username" required>
-          </div>
-          <div class="mb-3">
-            <label for="edit-prenom" class="form-label">Prénom</label>
-            <input type="text" class="form-control" id="edit-prenom" v-model="userToEdit.prenom" required>
-          </div>
-          <div class="mb-3">
-            <label for="edit-nom" class="form-label">Nom</label>
-            <input type="text" class="form-control" id="edit-nom" v-model="userToEdit.nom" required>
-          </div>
-          <div class="mb-3">
-            <label for="edit-email" class="form-label">Email</label>
-            <input type="email" class="form-control" id="edit-email" v-model="userToEdit.email" required>
-          </div>
-          <div class="mb-3">
-            <label for="edit-password" class="form-label">Mot de passe (laisser vide pour ne pas modifier)</label>
-            <input type="password" class="form-control" id="edit-password" v-model="userToEdit.password">
-          </div>
-          <div class="mb-3 form-check form-switch">
-            <input class="form-check-input" type="checkbox" id="edit-isAdmin" v-model="userToEdit.isAdmin" true-value="1" false-value="0">
-            <label class="form-check-label" for="edit-isAdmin">Administrateur</label>
-          </div>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button type="button" id="closeEditModal" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-        <button type="button" class="btn btn-primary" @click="updateUser" :disabled="formStatus.loading">
-          <span v-if="formStatus.loading" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-          Enregistrer
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
+  <!-- Modals -->
+  <AddUserModal 
+    :newUser="newUser" 
+    :formStatus="formStatus" 
+    @submit="submitUser" 
+  />
+  
+  <EditUserModal 
+    :userToEdit="userToEdit" 
+    :formStatus="formStatus" 
+    @update="updateUser" 
+  />
 </template>
-
-<style scoped>
-.action-buttons {
-  display: flex;
-  justify-content: center;
-}
-
-.action-buttons button {
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-}
-</style>

@@ -1,6 +1,7 @@
 <script setup>
 import {ref, h, onMounted} from "vue";
 import '~/css/admin.css'
+import '~/css/commandes.css'
 definePageMeta({
   layout: 'admin'
 })
@@ -26,8 +27,11 @@ function toggleExpand(orderId) {
 async function fetchCommandes() {
   loading.value = true
   try {
-    const response = await useFetch('http://localhost/SneakMe/api/commandes.php')
-    rawData.value = response.data.value
+    const response = await fetch('http://localhost/SneakMe/api/commandes.php')
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+    rawData.value = await response.json()
     
     data.value = rawData.value.map(commande => {
       if (expandedOrders.value[commande.id_commande] === undefined) {
@@ -61,7 +65,7 @@ async function updateStatut(id, terminer, newValue) {
   
   processingOrders.value[id] = true
   try {
-    const response = await $fetch(`http://localhost/SneakMe/api/commandes.php?id=${id}`, {
+    const response = await fetch(`http://localhost/SneakMe/api/commandes.php?id=${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json'
@@ -69,11 +73,13 @@ async function updateStatut(id, terminer, newValue) {
       body: JSON.stringify({ terminer: newValue !== undefined ? newValue : (terminer == 1 ? 0 : 1) })
     })
     
-    if (response.success) {
+    const result = await response.json()
+    
+    if (response.ok && result.success) {
       await fetchCommandes()
     } else {
-      console.error("Erreur lors de la mise à jour du statut:", response.message)
-      alert("Erreur lors de la mise à jour du statut: " + response.message)
+      console.error("Erreur lors de la mise à jour du statut:", result.message)
+      alert("Erreur lors de la mise à jour du statut: " + result.message)
     }
   } catch (error) {
     console.error("Erreur lors de la mise à jour du statut:", error)
@@ -166,179 +172,4 @@ onMounted(() => {
   </div>
 </template>
 
-<style scoped>
-.loading-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 50px 0;
-}
-
-.loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #3498db;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: 15px;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.commandes-list {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  margin-top: 20px;
-}
-
-.commande-card {
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  background-color: white;
-}
-
-.commande-header {
-  padding: 15px;
-  background-color: #f8f9fa;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px;
-  border-bottom: 1px solid #ddd;
-}
-
-.commande-id {
-  font-weight: bold;
-  margin-right: 10px;
-}
-
-.commande-statut {
-  padding: 3px 8px;
-  border-radius: 4px;
-  font-size: 0.9em;
-}
-
-.termine {
-  background-color: #d4edda;
-  color: #155724;
-}
-
-.en-cours {
-  background-color: #fff3cd;
-  color: #856404;
-}
-
-.annulee {
-  background-color: #f8d7da;
-  color: #721c24;
-}
-
-.commande-produits {
-  padding: 15px;
-}
-
-.commande-produits h3 {
-  margin-top: 0;
-  margin-bottom: 10px;
-  font-size: 1.1em;
-}
-
-.produits-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 15px;
-}
-
-.produit-item {
-  display: flex;
-  flex-direction: column;
-  border: 1px solid #eee;
-  border-radius: 5px;
-  overflow: hidden;
-}
-
-.produit-image {
-  width: 100%;
-  height: 120px;
-  object-fit: cover;
-}
-
-.produit-details {
-  padding: 10px;
-}
-
-.produit-title {
-  font-weight: bold;
-  margin-bottom: 5px;
-}
-
-.produit-price {
-  color: #e63946;
-  font-weight: bold;
-}
-
-.commande-actions {
-  display: flex;
-  gap: 10px;
-}
-
-.icon-btn {
-  width: 36px;
-  height: 36px;
-  border: none;
-  border-radius: 50%;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  transition: all 0.2s ease;
-}
-
-.icon-btn:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
-.icon-btn:first-child {
-  background-color: #007bff;
-}
-
-.btn-terminer {
-  background-color: #28a745;
-}
-
-.btn-annuler {
-  background-color: #dc3545;
-}
-
-.btn-cancel {
-  background-color: #6c757d;
-}
-
-.icon-btn:first-child:hover:not(:disabled) {
-  background-color: #0069d9;
-}
-
-.btn-terminer:hover:not(:disabled) {
-  background-color: #218838;
-}
-
-.btn-annuler:hover:not(:disabled) {
-  background-color: #c82333;
-}
-
-.btn-cancel:hover:not(:disabled) {
-  background-color: #5a6268;
-}
-</style>
 

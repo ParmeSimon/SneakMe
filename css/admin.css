@@ -11,7 +11,7 @@
 
 .u-table {
     margin: auto;
-    width: 90%;
+    width: 100%;
     background-color: white;
     border-radius: 0.75rem;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
@@ -57,13 +57,13 @@
 }
 
 .right{
-    width: 95%;
+    width: 100%;
     display: flex;
     justify-content: flex-end;
 }
 
 .ajouter{
-    width: 170px;
+    width: fit;
     padding: 15px 30px ;
     border-radius: 10px;
     outline: 3px solid #0866FF;

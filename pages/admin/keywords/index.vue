@@ -1,6 +1,11 @@
 <script setup>
 import {ref, h} from "vue";
 import '~/css/admin.css'
+import '~/css/keywords.css'
+// Import the modal components
+import AddKeywordModal from '~/components/modal/AddKeywordModal.vue'
+import EditKeywordModal from '~/components/modal/EditKeywordModal.vue'
+
 definePageMeta({
   layout: 'admin'
 })
@@ -200,103 +205,16 @@ const submitKeyword = async () => {
     <UTable class="u-table" :data="data" :columns="columns" />
   </div>
 
-<!-- Modal d'ajout -->
-<div class="modal fade" id="keywordModal" tabindex="-1" aria-labelledby="keywordModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h1 class="modal-title fs-5" id="keywordModalLabel">Ajouter un mot-clé</h1>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <!-- Message de statut -->
-        <div v-if="formStatus.message" :class="['alert', formStatus.isError ? 'alert-danger' : 'alert-success']">
-          {{ formStatus.message }}
-        </div>
-        
-        <form @submit.prevent="submitKeyword">
-          <div class="mb-3">
-            <label for="title" class="form-label">Mot-clé</label>
-            <input type="text" class="form-control" id="title" v-model="newKeyword.title" required>
-          </div>
-          
-          <div class="mb-3">
-            <label for="description" class="form-label">Description</label>
-            <input type="text" class="form-control" id="description" v-model="newKeyword.description" required>
-          </div>
-          
-          <div class="mb-3">
-            <label for="result" class="form-label">Réponse</label>
-            <textarea class="form-control" id="result" rows="5" v-model="newKeyword.result" required></textarea>
-          </div>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button type="button" id="closeKeywordModal" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-        <button type="button" class="btn btn-primary" @click="submitKeyword" :disabled="formStatus.loading">
-          <span v-if="formStatus.loading" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-          Enregistrer
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Modal d'édition -->
-<div class="modal fade" id="editKeywordModal" tabindex="-1" aria-labelledby="editKeywordModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h1 class="modal-title fs-5" id="editKeywordModalLabel">Modifier un mot-clé</h1>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <!-- Message de statut -->
-        <div v-if="formStatus.message" :class="['alert', formStatus.isError ? 'alert-danger' : 'alert-success']">
-          {{ formStatus.message }}
-        </div>
-        
-        <form @submit.prevent="updateKeyword">
-          <div class="mb-3">
-            <label for="edit-title" class="form-label">Mot-clé</label>
-            <input type="text" class="form-control" id="edit-title" v-model="keywordToEdit.title" required>
-          </div>
-          
-          <div class="mb-3">
-            <label for="edit-description" class="form-label">Description</label>
-            <input type="text" class="form-control" id="edit-description" v-model="keywordToEdit.description" required>
-          </div>
-          
-          <div class="mb-3">
-            <label for="edit-result" class="form-label">Réponse</label>
-            <textarea class="form-control" id="edit-result" rows="5" v-model="keywordToEdit.result" required></textarea>
-          </div>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button type="button" id="closeEditModal" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-        <button type="button" class="btn btn-primary" @click="updateKeyword" :disabled="formStatus.loading">
-          <span v-if="formStatus.loading" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-          Enregistrer
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
+  <!-- Modals -->
+  <AddKeywordModal 
+    :newKeyword="newKeyword"
+    :formStatus="formStatus"
+    @submit="submitKeyword"
+  />
+  
+  <EditKeywordModal 
+    :keywordToEdit="keywordToEdit"
+    :formStatus="formStatus"
+    @update="updateKeyword"
+  />
 </template>
-
-<style scoped>
-.action-buttons {
-  display: flex;
-  justify-content: center;
-}
-
-.action-buttons button {
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-}
-</style>
