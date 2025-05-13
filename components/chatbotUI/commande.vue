@@ -8,7 +8,7 @@
                     variant="solid"
                     color="primary"
                     icon="i-heroicons-user"
-                    @click="navigateTo('/login')"
+                    @click="() => emit('send-message', 'login')"
                 >
                     Se connecter
                 </UButton>
@@ -17,20 +17,27 @@
                     variant="soft"
                     color="primary"
                     icon="i-heroicons-user-plus"
-                    @click="navigateTo('/register')"
+                    @click="() => emit('send-message', 'register')"
                 >
                     S'inscrire
                 </UButton>
             </div>
         </div>
         <div v-else>
-            <p>Bonjour {{ user.name }}</p>
+            <p>Bonjour {{ user.username }}</p>
         </div>
     </div>
 </template>
 
 <script setup>
-const dataUser = localStorage.getItem('userSneakMe');
-const user = ref(dataUser ? JSON.parse(dataUser) : null);
+import { ref } from 'vue';
+const user = ref(null);
+const emit = defineEmits(['send-message']);
+
+const userLS = localStorage.getItem('user_sneakme');
+if (userLS) {
+    user.value = JSON.parse(userLS);
+    console.log('user', user.value);
+}
 
 </script>

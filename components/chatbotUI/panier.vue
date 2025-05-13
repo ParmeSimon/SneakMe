@@ -137,7 +137,7 @@ const produits = ref([]);
 const checkStock = async (productId) => {
     try {
         // Appel à l'API des produits avec l'ID spécifique
-        const response = await fetch(`http://localhost/apiSneakMe/api/produits.php?id=${productId}`);
+        const response = await fetch(`http://localhost/sneakme/api/produits.php?id=${productId}`);
         
         // Si la réponse n'est pas OK, le produit est considéré comme n'étant plus en stock
         if (!response.ok) {
@@ -219,7 +219,7 @@ onMounted(async () => {
         console.log('Ancien format de panier détecté (IDs simples)');
         // Charger tous les produits
         try {
-            const dataProduits = await fetch('http://localhost/apiSneakMe/api/produits.php');
+            const dataProduits = await fetch('http://localhost/sneakme/api/produits.php');
             produits.value = await dataProduits.json();
             // Créer les éléments du panier avec les détails des produits
             const countMap = {};

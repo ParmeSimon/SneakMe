@@ -11,24 +11,53 @@ import type { AccordionItem } from '@nuxt/ui'
 const items = ref<AccordionItem[]>([
   {
     label: 'Commande',
-    icon: 'i-lucide-smile',
-    content: 'You have nothing to do, @nuxt/icon will handle it automatically.'
+    icon: 'i-lucide-shopping-bag',
+    content: 'Affiche la liste de vos commandes passées et leur statut.'
   },
   {
     label: 'Boutique',
-    icon: 'i-lucide-swatch-book',
-    content: 'Choose a primary and a neutral color from your Tailwind CSS theme.'
+    icon: 'i-lucide-store',
+    content: 'Accède à notre collection de sneakers et explore nos produits disponibles.'
   },
   {
     label: 'Panier',
-    icon: 'i-lucide-box',
-    content: 'You can customize components by using the `class` / `ui` props or in your app.config.ts.'
+    icon: 'i-lucide-shopping-cart',
+    content: 'Affiche les produits actuellement dans votre panier d\'achat.'
   },
   {
-    label: 'Ajouter au panier',
-    icon: 'i-lucide-box',
-    content: 'You can customize components by using the `class` / `ui` props or in your app.config.ts.'
+    label: 'Ajouter au panier ${id}',
+    icon: 'i-lucide-plus-circle',
+    content: 'Ajoute le produit spécifié par son ID à votre panier d\'achat.'
+  },
+  {
+    label: 'Voir produit ${id}',
+    icon: 'i-lucide-eye',
+    content: 'Affiche les détails du produit correspondant à l\'ID spécifié.'
+  },
+  {
+    label: 'Catégorie ${type} ${value}',
+    icon: 'i-lucide-tag',
+    content: 'Filtre les produits selon le type de catégorie et la valeur spécifiés.'
+  },
+  {
+    label: 'login',
+    icon: 'i-lucide-log-in',
+    content: 'Accède à la page de connexion pour vous identifier avec votre compte.'
+  },
+  {
+    label: 'register',
+    icon: 'i-lucide-user-plus',
+    content: 'Accède au formulaire d\'inscription pour créer un nouveau compte utilisateur.'
+  },
+  {
+    label: 'logout',
+    icon: 'i-lucide-log-out',
+    content: 'Déconnecte votre session utilisateur actuelle.'
+  },
+  {
+    label: '/help',
+    icon: 'i-lucide-help-circle',
+    content: 'Affiche cette page d\'aide avec la liste des commandes disponibles.'
   }
 ])
 </script>
-    

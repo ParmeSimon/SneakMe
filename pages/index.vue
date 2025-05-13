@@ -7,6 +7,8 @@
           <UIcon name="i-heroicons-chat-bubble-left-right" class="mr-2 text-primary" size="lg" />
           SneakMe Assistant
         </h1>
+
+        <p v-if="user_sneakme" class="text-sm text-gray-600 dark:text-gray-400">Connecté en tant que {{ user_sneakme.email }}</p>
       </div>
     </header>
 
@@ -29,8 +31,13 @@
             <div class="bg-white dark:bg-gray-800 rounded-lg p-4 max-w-[80%] shadow-sm">
               <!-- Rendu dynamique du contenu du message -->
               <div v-if="message.isComponent" class="text-gray-700 dark:text-gray-200">
-                <p class="mb-2">{{ message.content }}</p>
-                <component :is="message.componentName" />
+                <p v-if="message.content" class="mb-2">{{ message.content }}</p>
+                <component 
+                  :is="message.componentName" 
+                  v-bind="message.props || {}" 
+                  @view-product="handleViewProduct"
+                  @send-message="sendMessage"
+                />
               </div>
               <p v-else class="text-gray-700 dark:text-gray-200">{{ message.content }}</p>
             </div>
@@ -124,11 +131,22 @@
 import { ref, reactive, onMounted, nextTick, markRaw } from 'vue';
 import Commande from '~/components/chatbotUI/commande.vue';
 import Boutique from '~/components/chatbotUI/boutique.vue';
+import VoirPlus from '~/components/chatbotUI/voirplus.vue';
 import Panier from '~/components/chatbotUI/panier.vue';
 import Help from '~/components/chatbotUI/help.vue';
+import Login from '~/components/chatbotUI/login.vue';
+import Register from '~/components/chatbotUI/register.vue';
+import VueAdmin from '~/components/chatbotUI/vue_admin.vue';
+import Logout from '~/components/chatbotUI/logout.vue';
 
+let user_sneakme = ref(null);
 
-
+onMounted(() => {
+  let user_sneakmeLS = localStorage.getItem('user_sneakme');
+  if (user_sneakmeLS) {
+    user_sneakme.value = JSON.parse(user_sneakmeLS);
+  }
+})
 // Référence au conteneur de messages pour le défilement automatique
 const messagesContainer = ref(null);
 
@@ -137,7 +155,7 @@ const newMessage = ref('');
 const isLoading = ref(false);
 
 // Messages de chat
-const messages = reactive([
+const messages = ref([
   {
     role: 'assistant',
     isComponent: false,
@@ -160,7 +178,10 @@ const suggestions = ref([...initialSuggestions]);
 const sneakersSuggestions = [
   'Avez-vous des modèles pour enfants ?',
   'Je préfère les sneakers basses',
-  'Quelles sont vos marques disponibles ?'
+  'Quelles sont vos marques disponibles ?',
+  'catégorie pointure 42',
+  'catégorie couleur noir',
+  'catégorie sexe homme'
 ];
 
 const commandeSuggestions = [
@@ -183,6 +204,12 @@ const runningSuggestions = [
 
 // Fonction pour envoyer un message
 const sendMessage = async (content) => {
+  if (content === 'Je suis maintenant connecté') {
+    let user_sneakmeLS = localStorage.getItem('user_sneakme');
+    if (user_sneakmeLS) {
+      user_sneakme.value = JSON.parse(user_sneakmeLS);
+    }
+  }
   // Si un contenu est fourni, l'utiliser, sinon utiliser le message saisi
   const messageContent = content || newMessage.value.trim();
   
@@ -193,7 +220,7 @@ const sendMessage = async (content) => {
   isLoading.value = true;
   
   // Ajouter le message de l'utilisateur
-  messages.push({
+  messages.value.push({
     role: 'user',
     content: messageContent
   });
@@ -215,27 +242,102 @@ const handleSubmit = () => {
 
 // Simuler une réponse du chatbot
 const simulateResponse = async (userMessage) => {
-  // isLoading est déjà activé dans sendMessage
+  isLoading.value = true;
   
-  // Générer une réponse basée sur le message de l'utilisateur
-  let response = '';
+  // Attendre un court délai pour simuler le traitement
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  let response;
 
-  response = generateResponse(userMessage.toLowerCase())
-  
-  // Ajouter la réponse du chatbot
-  // Si response est un objet avec isComponent, on l'utilise directement
-  if (typeof response === 'object' && response.isComponent !== undefined) {
-    messages.push({
-      role: 'assistant',
-      ...response // Spread l'objet response qui contient isComponent, componentName et content
-    });
+  // Normaliser le message (enlever les accents, mettre en minuscule)
+  const normalizedMessage = userMessage.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+  // Vérifier si c'est une commande de catégorie avec attributs
+  const categorieMatch = normalizedMessage.match(/categorie\s+(pointure|sexe|couleur)\s+(.+)/);
+  if (categorieMatch) {
+    const attributType = categorieMatch[1]; // pointure, sexe ou couleur
+    const attributValue = categorieMatch[2]; // la valeur spécifiée
+    
+    response = {
+      isComponent: true,
+      componentName: markRaw(Boutique),
+      content: `Voici les produits filtrés par ${attributType}: ${attributValue}`,
+      props: { 
+        filterType: attributType,
+        filterValue: attributValue
+      }
+    };
+  }
+  // Vérifier si c'est une demande pour voir un produit
+  else if (normalizedMessage.match(/voir produit (\d+)/)) {
+    const productId = normalizedMessage.match(/voir produit (\d+)/)[1];
+    response = {
+      isComponent: true,
+      componentName: markRaw(VoirPlus),
+      content: `Détails du produit #${productId}`,
+      props: { productId: productId }
+    };
+  }
+  // Déterminer la réponse en fonction du message de l'utilisateur
+  else if (normalizedMessage.includes('commande')) {
+    response = generateResponse('commande');
+  } else if (normalizedMessage.includes('boutique') || normalizedMessage.includes('sneaker')) {
+    response = generateResponse('boutique');
+  } else if (normalizedMessage.includes('panier')) {
+    response = generateResponse('panier');
+  } else if (normalizedMessage.startsWith('/help')) {
+    response = generateResponse('/help');
+  } else if (normalizedMessage === 'clear') {
+    response = generateResponse('clear');
+  } else if (normalizedMessage === 'vue admin') {
+    response = generateResponse('vue admin');
+  } else if (normalizedMessage === 'logout') {
+    response = generateResponse('logout');
+  } else if (normalizedMessage.includes('login')) {
+    response = {
+      isComponent: true,
+      componentName: markRaw(Login),
+      content: 'Voici la page de connexion',
+      props: {}
+    };
+  } else if (normalizedMessage.includes('register')) {
+    response = {
+      isComponent: true,
+      componentName: markRaw(Register),
+      content: 'Voici la page d\'inscription',
+      props: {}
+    };
   } else {
-    // Fallback pour la compatibilité avec d'anciennes réponses textuelles
-    messages.push({
-      role: 'assistant',
-      isComponent: false,
-      content: response
-    });
+    // Réponse par défaut
+    response = generateResponse(userMessage);
+  }
+  
+  // Ajouter la réponse du chatbot seulement si elle n'est pas null
+  if (response !== null) {
+    // Si response est un objet avec isComponent, on l'utilise directement
+    if (typeof response === 'object' && response.isComponent !== undefined) {
+      // Créer un nouvel objet message avec tous les champs de response
+      const messageObj = {
+        role: 'assistant',
+        isComponent: response.isComponent,
+        componentName: response.componentName,
+        content: response.content || ''
+      };
+      
+      // Ajouter les props si présents
+      if (response.props) {
+        messageObj.props = response.props;
+      }
+      
+      messages.value.push(messageObj);
+    } else {
+      // Fallback pour la compatibilité avec d'anciennes réponses textuelles
+      messages.value.push({
+        role: 'assistant',
+        isComponent: false,
+        content: response
+      });
+    }
   }
   
   isLoading.value = false;
@@ -271,7 +373,7 @@ function generateResponse(id) {
       return {
         isComponent: true,
         componentName: markRaw(Boutique),
-        content: 'Pour suivre votre commande, veuillez vous connecter à votre compte et accéder à la section "Mes commandes". Vous y trouverez toutes les informations de suivi.'
+        content: 'Voici notre sélection de sneakers disponibles :'
       };
     case 'panier':
       return {
@@ -285,6 +387,31 @@ function generateResponse(id) {
         componentName: markRaw(Help),
         content: ''
       };
+    case 'vue admin':
+      return {
+        isComponent: true,
+        componentName: markRaw(VueAdmin),
+        content: ''
+      };
+    case 'logout':
+      user_sneakme.value = null;
+      return {
+        isComponent: true,
+        componentName: markRaw(Logout),
+        content: ''
+      };
+    case 'clear':
+      messages.value = [
+      {
+        role: 'assistant',
+        isComponent: false,
+        content: 'Bonjour ! Je suis SneakMe Assistant. Comment puis-je vous aider aujourd\'hui ?'
+      }
+      ];
+      console.log(messages.value);
+      // Ne pas ajouter de nouveau message après le clear
+      return null;
+      break;
     default:
       return {
         isComponent: false,
@@ -312,10 +439,33 @@ const animateSuggestion = (event) => {
   }, 200);
 };
 
+// Gérer l'événement view-product émis par le composant boutique
+const handleViewProduct = (productData) => {
+  console.log('Event view-product reçu:', productData);
+  
+  // Ajouter le composant VoirPlus au chat
+  messages.value.push({
+    role: 'assistant',
+    isComponent: productData.isComponent,
+    componentName: productData.componentName,
+    content: productData.content,
+    props: productData.props
+  });
+  
+  // Faire défiler vers le bas pour voir le nouveau message
+  scrollToBottom();
+};
+
 // Faire défiler vers le bas au chargement initial
 onMounted(() => {
   scrollToBottom();
 });
+
+// Gérer l'événement login-success émis par le composant login
+const handleLoginSuccess = (user) => {
+  console.log('Event login-success reçu:', user);
+};
+
 </script>
 
 <style scoped>
