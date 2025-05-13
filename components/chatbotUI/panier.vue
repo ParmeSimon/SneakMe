@@ -117,21 +117,132 @@
                         </div>
                     </div>
                     
-                    <button class="w-full mt-6 bg-primary-500 hover:bg-primary-600 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center">
-                        Procéder au paiement
+                    <button 
+                        class="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 mt-6"
+                        :disabled="!allItemsInStock || isLoading"
+                        @click="showPaymentModal = true"
+                    >
+                        <span v-if="isLoading">
+                            <UIcon name="i-heroicons-arrow-path" class="animate-spin mr-2" /> Chargement...
+                        </span>
+                        <span v-else>Procéder au paiement</span>
                     </button>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Modal de paiement -->
+    <UModal v-model="showPaymentModal" prevent-close>
+        <UCard :ui="{ ring: '', divide: 'divide-y divide-gray-100 dark:divide-gray-800' }">
+            <template #header>
+                <div class="flex items-center justify-between">
+                    <h3 class="text-base font-semibold leading-6 text-gray-900 dark:text-white">
+                        Finaliser votre commande
+                    </h3>
+                    <UButton color="gray" variant="ghost" icon="i-heroicons-x-mark-20-solid" class="-my-1" @click="showPaymentModal = false" />
+                </div>
+            </template>
+
+            <div class="py-4 space-y-4">
+                <!-- Étape 1: Coordonnées bancaires -->
+                <div v-if="!paymentCompleted">
+                    <h4 class="font-medium mb-2">Informations de paiement</h4>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                        Pour finaliser votre commande, veuillez effectuer un virement bancaire vers le compte suivant :
+                    </p>
+                    
+                    <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg mb-4">
+                        <div class="grid grid-cols-2 gap-2 text-sm">
+                            <div class="text-gray-500 dark:text-gray-400">Titulaire du compte :</div>
+                            <div class="font-medium">SneakMe SARL</div>
+                            
+                            <div class="text-gray-500 dark:text-gray-400">IBAN :</div>
+                            <div class="font-medium">FR76 3000 6000 0123 4567 8900 123</div>
+                            
+                            <div class="text-gray-500 dark:text-gray-400">BIC :</div>
+                            <div class="font-medium">AGFBFRCC</div>
+                            
+                            <div class="text-gray-500 dark:text-gray-400">Banque :</div>
+                            <div class="font-medium">Banque Nationale de France</div>
+                            
+                            <div class="text-gray-500 dark:text-gray-400">Montant :</div>
+                            <div class="font-medium">{{ formatPrice(total) }}</div>
+                            
+                            <div class="text-gray-500 dark:text-gray-400">Référence :</div>
+                            <div class="font-medium">SNEAKME-{{ Date.now().toString().slice(-6) }}</div>
+                        </div>
+                    </div>
+                    
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                        Veuillez inclure la référence dans le libellé de votre virement pour faciliter le traitement de votre commande.
+                    </p>
+                    
+                    <UAlert
+                        title="Information importante"
+                        description="En cliquant sur 'Confirmer ma commande', vous confirmez avoir effectué ou vous engagez à effectuer le virement bancaire du montant indiqué."
+                        color="blue"
+                        variant="soft"
+                        class="mb-4"
+                    />
+                </div>
+                
+                <!-- Étape 2: Confirmation -->
+                <div v-else class="text-center py-4">
+                    <UIcon name="i-heroicons-check-circle" class="h-16 w-16 text-green-500 mx-auto mb-4" />
+                    <h4 class="text-lg font-medium mb-2">Commande confirmée !</h4>
+                    <p class="text-gray-600 dark:text-gray-400 mb-6">
+                        Votre commande a été enregistrée avec succès. Vous recevrez une confirmation par email dès que votre paiement sera validé.
+                    </p>
+                    <p class="text-sm font-medium">Numéro de commande: #{{ orderNumber }}</p>
+                </div>
+            </div>
+
+            <template #footer>
+                <div class="flex justify-end gap-3">
+                    <UButton
+                        v-if="!paymentCompleted"
+                        color="gray"
+                        variant="soft"
+                        @click="showPaymentModal = false"
+                    >
+                        Annuler
+                    </UButton>
+                    <UButton
+                        v-if="!paymentCompleted"
+                        color="primary"
+                        :loading="isProcessingOrder"
+                        :disabled="isProcessingOrder"
+                        @click="processOrder"
+                    >
+                        Confirmer ma commande
+                    </UButton>
+                    <UButton
+                        v-else
+                        color="primary"
+                        @click="finishOrder"
+                    >
+                        Terminer
+                    </UButton>
+                </div>
+            </template>
+        </UCard>
+    </UModal>
 </template>
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue';
 
-// Récupération des produits dans le panier depuis localStorage
+// Variables pour l'interface utilisateur
 const panierItems = ref([]);
 const produits = ref([]);
+const isLoading = ref(false);
+const showPaymentModal = ref(false);
+const paymentCompleted = ref(false);
+const isProcessingOrder = ref(false);
+const orderNumber = ref('');
+const user = ref(null);
+const emit = defineEmits(['send-message', 'view-product', 'login-success', 'register-success']);
 
 // Vérifier si un produit est en stock en interrogeant directement la route des produits
 const checkStock = async (productId) => {
@@ -339,5 +450,98 @@ function couleurLabel(couleur) {
         case 'gris': return 'gray';
         default: return 'white';
     }
+}
+
+// Vérifier si tous les produits sont en stock
+const allItemsInStock = computed(() => {
+    return panierItems.value.every(item => item.inStock);
+});
+
+// Récupérer l'utilisateur connecté
+onMounted(() => {
+    const userLS = localStorage.getItem('user_sneakme');
+    if (userLS) {
+        user.value = JSON.parse(userLS);
+    }
+});
+
+// Traiter la commande
+async function processOrder() {
+    // Vérifier si l'utilisateur est connecté
+    if (!user.value) {
+        alert('Vous devez être connecté pour finaliser votre commande.');
+        showPaymentModal.value = false;
+        emit('send-message', 'login');
+        return;
+    }
+    
+    // Vérifier si le panier contient des produits
+    if (panierItems.value.length === 0) {
+        alert('Votre panier est vide.');
+        showPaymentModal.value = false;
+        return;
+    }
+    
+    // Vérifier si tous les produits sont en stock
+    if (!allItemsInStock.value) {
+        alert('Certains produits de votre panier ne sont plus en stock.');
+        showPaymentModal.value = false;
+        return;
+    }
+    
+    isProcessingOrder.value = true;
+    
+    try {
+        // Préparer les données de la commande
+        const orderData = {
+            id_user: user.value.id,
+            items: panierItems.value.map(item => ({
+                id_produit: item.id,
+                quantity: item.quantity
+            }))
+        };
+        
+        // Envoyer la commande à l'API
+        const response = await fetch('http://localhost/sneakme/api/commandes.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(orderData)
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Erreur lors de la création de la commande');
+        }
+        
+        const data = await response.json();
+        
+        // Enregistrer le numéro de commande
+        orderNumber.value = data.id;
+        
+        // Marquer le paiement comme complété
+        paymentCompleted.value = true;
+        
+        // Vider le panier
+        localStorage.removeItem('panierSneakMe');
+        
+    } catch (error) {
+        console.error('Erreur:', error);
+        alert(`Erreur lors de la création de la commande: ${error.message}`);
+    } finally {
+        isProcessingOrder.value = false;
+    }
+}
+
+// Finaliser la commande et fermer le modal
+function finishOrder() {
+    // Réinitialiser les états
+    showPaymentModal.value = false;
+    paymentCompleted.value = false;
+    panierItems.value = [];
+    
+    // Rediriger vers la page des commandes
+    emit('send-message', 'commande');
 }
 </script>

@@ -8,7 +8,16 @@
           SneakMe Assistant
         </h1>
 
-        <p v-if="user_sneakme" class="text-sm text-gray-600 dark:text-gray-400">Connecté en tant que {{ user_sneakme.email }}</p>
+        <div class="flex justify-center items-center">
+          <p v-if="user_sneakme" class="text-sm text-gray-600 dark:text-gray-400">
+            Connecté en tant que {{ user_sneakme.email }}
+          </p>
+          <p v-else class="text-sm text-gray-600 dark:text-gray-400">
+            <UButton color="primary" class="me-3" @click="() => sendMessage('login')" label="Se connecter"/>
+            <UButton color="primary" @click="() => sendMessage('register')" variant="soft" label="S'inscrire"/>
+          </p>
+          <UButton color="primary" class="font-bold rounded-full ms-6" icon="i-heroicons-information-circle" @click="() => sendMessage('/help')" variant="soft"/>
+        </div>
       </div>
     </header>
 
@@ -37,6 +46,8 @@
                   v-bind="message.props || {}" 
                   @view-product="handleViewProduct"
                   @send-message="sendMessage"
+                  @login-success="handleLoginSuccess"
+                  @register-success="handleRegisterSuccess"
                 />
               </div>
               <p v-else class="text-gray-700 dark:text-gray-200">{{ message.content }}</p>
@@ -204,12 +215,6 @@ const runningSuggestions = [
 
 // Fonction pour envoyer un message
 const sendMessage = async (content) => {
-  if (content === 'Je suis maintenant connecté') {
-    let user_sneakmeLS = localStorage.getItem('user_sneakme');
-    if (user_sneakmeLS) {
-      user_sneakme.value = JSON.parse(user_sneakmeLS);
-    }
-  }
   // Si un contenu est fourni, l'utiliser, sinon utiliser le message saisi
   const messageContent = content || newMessage.value.trim();
   
@@ -464,6 +469,17 @@ onMounted(() => {
 // Gérer l'événement login-success émis par le composant login
 const handleLoginSuccess = (user) => {
   console.log('Event login-success reçu:', user);
+  let user_sneakmeLS = localStorage.getItem('user_sneakme');
+  if (user_sneakmeLS) {
+    user_sneakme.value = JSON.parse(user_sneakmeLS);
+  }
+}
+
+// Gérer l'événement register-success émis par le composant register
+const handleRegisterSuccess = () => {
+  console.log('Event register-success reçu');
+  // Aucune action spécifique nécessaire ici car le composant register
+  // redirige déjà vers la page de connexion après l'inscription
 };
 
 </script>

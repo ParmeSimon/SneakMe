@@ -85,9 +85,14 @@ if (isGetRequest()) {
         // Pour chaque commande, récupérer ses items
         foreach ($commandes as &$commande) {
             $stmt = $db->prepare("
-                SELECT i.*, p.title as produit_title, p.price
+                SELECT i.*, p.title as produit_title, p.price, p.url_image, 
+                       c.label as categorie, co.label as couleur, po.label as pointure, s.label as sexe
                 FROM items i
                 JOIN produits p ON i.id_produit = p.id
+                LEFT JOIN categories c ON p.id_categorie = c.id
+                LEFT JOIN couleurs co ON p.id_couleur = co.id
+                LEFT JOIN pointures po ON p.id_pointure = po.id
+                LEFT JOIN sexes s ON p.id_sexe = s.id
                 WHERE i.id_commande = ?
             ");
             $stmt->execute([$commande['id']]);
@@ -135,8 +140,8 @@ if (isGetRequest()) {
         // Démarrer une transaction
         $db->beginTransaction();
         
-        // Insertion de la nouvelle commande
-        $stmt = $db->prepare("INSERT INTO commandes (id_user) VALUES (?)");
+        // Insertion de la nouvelle commande avec état par défaut 'En attente'
+        $stmt = $db->prepare("INSERT INTO commandes (id_user, state) VALUES (?, 'En attente')");
         $stmt->execute([$data['id_user']]);
         $commandeId = $db->lastInsertId();
         
