@@ -153,7 +153,6 @@ const uploadImage = async (file) => {
 
 // Fonction pour préparer l'édition d'un produit
 const editProduct = (product) => {
-  console.log("Produit original:", product);
   
   productToEdit.value = { 
     id: product.id,
@@ -172,7 +171,6 @@ const editProduct = (product) => {
   editImageFile.value = null
   editImagePreview.value = product.url_image
   
-  console.log("ProductToEdit après conversion:", productToEdit.value);
 }
 
 // Fonction pour mettre à jour un produit

@@ -17,7 +17,6 @@ const columns = [
 const rawData = ref([])
 const data = ref([])
 const expandedOrders = ref({})
-const loading = ref(false)
 const processingOrders = ref({})
 
 function toggleExpand(orderId) {
@@ -25,7 +24,6 @@ function toggleExpand(orderId) {
 }
 
 async function fetchCommandes() {
-  loading.value = true
   try {
     const response = await fetch('http://localhost/SneakMe/api/commandes.php')
     if (!response.ok) {
@@ -55,8 +53,6 @@ async function fetchCommandes() {
   } catch (error) {
     console.error("Erreur lors du chargement des commandes:", error)
     alert("Erreur lors du chargement des commandes")
-  } finally {
-    loading.value = false
   }
 }
 
@@ -103,13 +99,7 @@ onMounted(() => {
 <template>
   <div class="container">
     <h1 class="title">Liste des commandes</h1>
-    
-    <div v-if="loading" class="loading-container">
-      <div class="loading-spinner"></div>
-      <p>Chargement des commandes...</p>
-    </div>
-    
-    <div v-else class="commandes-list">
+    <div class="commandes-list">
       <div v-for="commande in data" :key="commande.id_commande" class="commande-card">
         <div class="commande-header">
           <div>

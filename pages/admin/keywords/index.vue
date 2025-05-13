@@ -53,9 +53,7 @@ const keywordToEdit = ref({
 })
 
 // Fonction pour préparer l'édition d'un mot-clé
-const editKeyword = (keyword) => {
-  console.log("Mot-clé original:", keyword);
-  
+const editKeyword = (keyword) => {  
   keywordToEdit.value = { 
     id: keyword.id,
     title: keyword.title,
@@ -63,7 +61,6 @@ const editKeyword = (keyword) => {
     result: keyword.result
   }
   
-  console.log("KeywordToEdit après préparation:", keywordToEdit.value);
 }
 
 // Fonction pour mettre à jour un mot-clé
