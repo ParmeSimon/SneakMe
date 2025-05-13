@@ -17,18 +17,18 @@ if (isGetRequest()) {
     // Récupération d'une pointure spécifique ou de toutes les pointures
     if (isset($_GET['id'])) {
         // Récupération d'une pointure par son ID
-        $stmt = $db->prepare("SELECT * FROM pointures WHERE id = ?");
+        $stmt = $db->prepare("SELECT id, label FROM pointures WHERE id = ?");
         $stmt->execute([$_GET['id']]);
         $pointure = $stmt->fetch();
         
         if ($pointure) {
-            sendJsonResponse($pointure);
+            sendJsonResponse(['success' => true, 'data' => $pointure]);
         } else {
-            sendJsonResponse(['error' => 'Pointure non trouvée'], 404);
+            sendJsonResponse(['error' => 'Pointure non trouvée', 'success' => false], 404);
         }
     } else {
         // Récupération de toutes les pointures
-        $stmt = $db->query("SELECT * FROM pointures ORDER BY label ASC");
+        $stmt = $db->query("SELECT id, label FROM pointures ORDER BY label ASC");
         $pointures = $stmt->fetchAll();
         sendJsonResponse($pointures);
     }
@@ -37,76 +37,91 @@ if (isGetRequest()) {
     $data = getRequestData();
     
     // Validation des champs requis
-    if (!isset($data['label']) || empty($data['label'])) {
-        sendJsonResponse(['error' => 'Le label de la pointure est requis'], 400);
+    // Vérifier si on utilise nom ou label dans la requête
+    $labelValue = '';
+    if (isset($data['nom']) && !empty($data['nom'])) {
+        $labelValue = $data['nom'];
+    } elseif (isset($data['label']) && !empty($data['label'])) {
+        $labelValue = $data['label'];
+    } else {
+        sendJsonResponse(['error' => 'Le nom de la pointure est requis', 'success' => false], 400);
     }
     
     // Vérifier si la pointure existe déjà
     $stmt = $db->prepare("SELECT id FROM pointures WHERE label = ?");
-    $stmt->execute([$data['label']]);
+    $stmt->execute([$labelValue]);
     if ($stmt->fetch()) {
-        sendJsonResponse(['error' => 'Cette pointure existe déjà'], 409);
+        sendJsonResponse(['error' => 'Cette pointure existe déjà', 'success' => false], 409);
     }
     
     // Insertion de la nouvelle pointure
     $stmt = $db->prepare("INSERT INTO pointures (label) VALUES (?)");
-    $success = $stmt->execute([$data['label']]);
+    $success = $stmt->execute([$labelValue]);
     
     if ($success) {
         $pointureId = $db->lastInsertId();
-        $stmt = $db->prepare("SELECT * FROM pointures WHERE id = ?");
+        $stmt = $db->prepare("SELECT id, label FROM pointures WHERE id = ?");
         $stmt->execute([$pointureId]);
         $newPointure = $stmt->fetch();
         
-        sendJsonResponse($newPointure, 201);
+        sendJsonResponse(['success' => true, 'message' => 'Pointure ajoutée avec succès', 'data' => $newPointure], 201);
     } else {
-        sendJsonResponse(['error' => 'Erreur lors de la création de la pointure'], 500);
+        sendJsonResponse(['error' => 'Erreur lors de la création de la pointure', 'success' => false], 500);
     }
 } elseif (isPutRequest()) {
     // Mise à jour d'une pointure existante
-    if (!isset($_GET['id'])) {
-        sendJsonResponse(['error' => 'ID pointure non spécifié'], 400);
-    }
-    
-    $pointureId = $_GET['id'];
     $data = getRequestData();
     
-    // Validation des champs requis
-    if (!isset($data['label']) || empty($data['label'])) {
-        sendJsonResponse(['error' => 'Le label de la pointure est requis'], 400);
+    // Récupérer l'ID soit depuis l'URL, soit depuis les données
+    if (isset($data['id'])) {
+        $pointureId = $data['id'];
+    } elseif (isset($_GET['id'])) {
+        $pointureId = $_GET['id'];
+    } else {
+        sendJsonResponse(['error' => 'ID pointure non spécifié', 'success' => false], 400);
+    }
+    
+    // Validation des champs requis - vérifier si on utilise nom ou label
+    $labelValue = '';
+    if (isset($data['nom']) && !empty($data['nom'])) {
+        $labelValue = $data['nom'];
+    } elseif (isset($data['label']) && !empty($data['label'])) {
+        $labelValue = $data['label'];
+    } else {
+        sendJsonResponse(['error' => 'Le nom de la pointure est requis', 'success' => false], 400);
     }
     
     // Vérifier si la pointure existe
     $stmt = $db->prepare("SELECT * FROM pointures WHERE id = ?");
     $stmt->execute([$pointureId]);
     if (!$stmt->fetch()) {
-        sendJsonResponse(['error' => 'Pointure non trouvée'], 404);
+        sendJsonResponse(['error' => 'Pointure non trouvée', 'success' => false], 404);
     }
     
     // Vérifier si le nouveau label existe déjà pour une autre pointure
     $stmt = $db->prepare("SELECT id FROM pointures WHERE label = ? AND id != ?");
-    $stmt->execute([$data['label'], $pointureId]);
+    $stmt->execute([$labelValue, $pointureId]);
     if ($stmt->fetch()) {
-        sendJsonResponse(['error' => 'Une pointure avec ce label existe déjà'], 409);
+        sendJsonResponse(['error' => 'Une pointure avec ce nom existe déjà', 'success' => false], 409);
     }
     
     // Mise à jour de la pointure
     $stmt = $db->prepare("UPDATE pointures SET label = ? WHERE id = ?");
-    $success = $stmt->execute([$data['label'], $pointureId]);
+    $success = $stmt->execute([$labelValue, $pointureId]);
     
     if ($success) {
-        $stmt = $db->prepare("SELECT * FROM pointures WHERE id = ?");
+        $stmt = $db->prepare("SELECT id, label FROM pointures WHERE id = ?");
         $stmt->execute([$pointureId]);
         $updatedPointure = $stmt->fetch();
         
-        sendJsonResponse($updatedPointure);
+        sendJsonResponse(['success' => true, 'message' => 'Pointure mise à jour avec succès', 'data' => $updatedPointure]);
     } else {
-        sendJsonResponse(['error' => 'Erreur lors de la mise à jour de la pointure'], 500);
+        sendJsonResponse(['error' => 'Erreur lors de la mise à jour de la pointure', 'success' => false], 500);
     }
 } elseif (isDeleteRequest()) {
     // Suppression d'une pointure
     if (!isset($_GET['id'])) {
-        sendJsonResponse(['error' => 'ID pointure non spécifié'], 400);
+        sendJsonResponse(['error' => 'ID pointure non spécifié', 'success' => false], 400);
     }
     
     $pointureId = $_GET['id'];
@@ -115,7 +130,7 @@ if (isGetRequest()) {
     $stmt = $db->prepare("SELECT * FROM pointures WHERE id = ?");
     $stmt->execute([$pointureId]);
     if (!$stmt->fetch()) {
-        sendJsonResponse(['error' => 'Pointure non trouvée'], 404);
+        sendJsonResponse(['error' => 'Pointure non trouvée', 'success' => false], 404);
     }
     
     // Vérifier si la pointure est utilisée dans des produits
@@ -124,7 +139,7 @@ if (isGetRequest()) {
     $result = $stmt->fetch();
     
     if ($result['count'] > 0) {
-        sendJsonResponse(['error' => 'Impossible de supprimer cette pointure car elle est utilisée par des produits'], 409);
+        sendJsonResponse(['error' => 'Impossible de supprimer cette pointure car elle est utilisée par des produits', 'success' => false], 409);
     }
     
     // Suppression de la pointure
@@ -132,12 +147,12 @@ if (isGetRequest()) {
     $success = $stmt->execute([$pointureId]);
     
     if ($success) {
-        sendJsonResponse(['message' => 'Pointure supprimée avec succès']);
+        sendJsonResponse(['success' => true, 'message' => 'Pointure supprimée avec succès']);
     } else {
-        sendJsonResponse(['error' => 'Erreur lors de la suppression de la pointure'], 500);
+        sendJsonResponse(['error' => 'Erreur lors de la suppression de la pointure', 'success' => false], 500);
     }
 } else {
     // Méthode non supportée
-    sendJsonResponse(['error' => 'Méthode non supportée'], 405);
+    sendJsonResponse(['error' => 'Méthode non supportée', 'success' => false], 405);
 }
 ?>

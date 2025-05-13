@@ -22,14 +22,15 @@ if (isGetRequest()) {
         $categorie = $stmt->fetch();
         
         if ($categorie) {
-            sendJsonResponse($categorie);
+            sendJsonResponse(['success' => true, 'data' => $categorie]);
         } else {
-            sendJsonResponse(['error' => 'Catégorie non trouvée'], 404);
+            sendJsonResponse(['error' => 'Catégorie non trouvée', 'success' => false], 404);
         }
     } else {
         // Récupération de toutes les catégories
         $stmt = $db->query("SELECT * FROM categories");
         $categories = $stmt->fetchAll();
+        // Retourner directement le tableau pour compatibilité avec le frontend
         sendJsonResponse($categories);
     }
 } elseif (isPostRequest()) {
@@ -38,14 +39,14 @@ if (isGetRequest()) {
     
     // Validation des champs requis
     if (!isset($data['label']) || empty($data['label'])) {
-        sendJsonResponse(['error' => 'Le label de la catégorie est requis'], 400);
+        sendJsonResponse(['error' => 'Le label de la catégorie est requis', 'success' => false], 400);
     }
     
     // Vérifier si la catégorie existe déjà
     $stmt = $db->prepare("SELECT id FROM categories WHERE label = ?");
     $stmt->execute([$data['label']]);
     if ($stmt->fetch()) {
-        sendJsonResponse(['error' => 'Cette catégorie existe déjà'], 409);
+        sendJsonResponse(['error' => 'Cette catégorie existe déjà', 'success' => false], 409);
     }
     
     // Insertion de la nouvelle catégorie
@@ -58,36 +59,39 @@ if (isGetRequest()) {
         $stmt->execute([$categorieId]);
         $newCategorie = $stmt->fetch();
         
-        sendJsonResponse($newCategorie, 201);
+        sendJsonResponse(['success' => true, 'message' => 'Catégorie ajoutée avec succès', 'data' => $newCategorie], 201);
     } else {
-        sendJsonResponse(['error' => 'Erreur lors de la création de la catégorie'], 500);
+        sendJsonResponse(['error' => 'Erreur lors de la création de la catégorie', 'success' => false], 500);
     }
 } elseif (isPutRequest()) {
     // Mise à jour d'une catégorie existante
-    if (!isset($_GET['id'])) {
-        sendJsonResponse(['error' => 'ID catégorie non spécifié'], 400);
-    }
-    
-    $categorieId = $_GET['id'];
     $data = getRequestData();
+    
+    if (isset($data['id'])) {
+        $categorieId = $data['id'];
+    } elseif (isset($_GET['id'])) {
+        $categorieId = $_GET['id'];
+    } else {
+        sendJsonResponse(['error' => 'ID catégorie non spécifié', 'success' => false], 400);
+    }
     
     // Validation des champs requis
     if (!isset($data['label']) || empty($data['label'])) {
-        sendJsonResponse(['error' => 'Le label de la catégorie est requis'], 400);
+        sendJsonResponse(['error' => 'Le label de la catégorie est requis', 'success' => false], 400);
     }
     
     // Vérifier si la catégorie existe
     $stmt = $db->prepare("SELECT * FROM categories WHERE id = ?");
     $stmt->execute([$categorieId]);
     if (!$stmt->fetch()) {
-        sendJsonResponse(['error' => 'Catégorie non trouvée'], 404);
+        sendJsonResponse(['error' => 'Catégorie non trouvée', 'success' => false], 404);
     }
     
     // Vérifier si le nouveau label existe déjà pour une autre catégorie
     $stmt = $db->prepare("SELECT id FROM categories WHERE label = ? AND id != ?");
     $stmt->execute([$data['label'], $categorieId]);
     if ($stmt->fetch()) {
-        sendJsonResponse(['error' => 'Une catégorie avec ce label existe déjà'], 409);
+        sendJsonResponse(['error' => 'Une catégorie avec ce label existe déjà', 'success' => false], 409);
     }
     
     // Mise à jour de la catégorie
@@ -99,14 +103,14 @@ if (isGetRequest()) {
         $stmt->execute([$categorieId]);
         $updatedCategorie = $stmt->fetch();
         
-        sendJsonResponse($updatedCategorie);
+        sendJsonResponse(['success' => true, 'message' => 'Catégorie mise à jour avec succès', 'data' => $updatedCategorie]);
     } else {
-        sendJsonResponse(['error' => 'Erreur lors de la mise à jour de la catégorie'], 500);
+        sendJsonResponse(['error' => 'Erreur lors de la mise à jour de la catégorie', 'success' => false], 500);
     }
 } elseif (isDeleteRequest()) {
     // Suppression d'une catégorie
     if (!isset($_GET['id'])) {
-        sendJsonResponse(['error' => 'ID catégorie non spécifié'], 400);
+        sendJsonResponse(['error' => 'ID catégorie non spécifié', 'success' => false], 400);
     }
     
     $categorieId = $_GET['id'];
@@ -115,7 +119,7 @@ if (isGetRequest()) {
     $stmt = $db->prepare("SELECT * FROM categories WHERE id = ?");
     $stmt->execute([$categorieId]);
     if (!$stmt->fetch()) {
-        sendJsonResponse(['error' => 'Catégorie non trouvée'], 404);
+        sendJsonResponse(['error' => 'Catégorie non trouvée', 'success' => false], 404);
     }
     
     // Vérifier si la catégorie est utilisée dans des produits
@@ -124,7 +128,7 @@ if (isGetRequest()) {
     $result = $stmt->fetch();
     
     if ($result['count'] > 0) {
-        sendJsonResponse(['error' => 'Impossible de supprimer cette catégorie car elle est utilisée par des produits'], 409);
+        sendJsonResponse(['error' => 'Impossible de supprimer cette catégorie car elle est utilisée par des produits', 'success' => false], 409);
     }
     
     // Suppression de la catégorie
@@ -132,12 +136,12 @@ if (isGetRequest()) {
     $success = $stmt->execute([$categorieId]);
     
     if ($success) {
-        sendJsonResponse(['message' => 'Catégorie supprimée avec succès']);
+        sendJsonResponse(['success' => true, 'message' => 'Catégorie supprimée avec succès']);
     } else {
-        sendJsonResponse(['error' => 'Erreur lors de la suppression de la catégorie'], 500);
+        sendJsonResponse(['error' => 'Erreur lors de la suppression de la catégorie', 'success' => false], 500);
     }
 } else {
     // Méthode non supportée
-    sendJsonResponse(['error' => 'Méthode non supportée'], 405);
+    sendJsonResponse(['error' => 'Méthode non supportée', 'success' => false], 405);
 }
 ?>

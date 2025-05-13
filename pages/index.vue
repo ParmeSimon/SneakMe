@@ -152,11 +152,25 @@ import Logout from '~/components/chatbotUI/logout.vue';
 
 let user_sneakme = ref(null);
 
+let actions = ref([]);
+
+const fetchActions = () => {
+    fetch('http://localhost/sneakme/api/actions.php')
+    .then(response => response.json())
+    .then(data => {
+        actions.value = data;
+    })
+    .catch(error => {
+        console.error('Error fetching actions:', error);
+    });
+}
+
 onMounted(() => {
   let user_sneakmeLS = localStorage.getItem('user_sneakme');
   if (user_sneakmeLS) {
     user_sneakme.value = JSON.parse(user_sneakmeLS);
   }
+  fetchActions();
 })
 // Référence au conteneur de messages pour le défilement automatique
 const messagesContainer = ref(null);
@@ -418,6 +432,14 @@ function generateResponse(id) {
       return null;
       break;
     default:
+      for (let i = 0; i < actions.value.length; i++) {
+        if (actions.value[i].title === id) {
+          return {
+            isComponent: false,
+            content: actions.value[i].result
+          };
+        }
+      }
       return {
         isComponent: false,
         content: 'Merci pour votre message. Comment puis-je vous aider davantage concernant nos sneakers ou nos services ?'

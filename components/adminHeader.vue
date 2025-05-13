@@ -12,6 +12,18 @@
     <ULink to="/admin/users">
       <UButton :class="buttonClass('/admin/users')">Utilisateurs</UButton>
     </ULink>
+    <UButton :class="buttonClass('/admin/select')" class="expendHover">Options</UButton>
+    <div class="subMenu">
+      <ULink to="/admin/categories">
+        <UButton :class="buttonClass('/admin/categories')" class="subMenuButton">Catégories</UButton>
+      </ULink>
+      <ULink to="/admin/couleurs">
+        <UButton :class="buttonClass('/admin/couleurs')" class="subMenuButton">Couleurs</UButton>
+      </ULink>
+      <ULink to="/admin/pointures">
+        <UButton :class="buttonClass('/admin/pointures')" class="subMenuButton">Pointures</UButton>
+      </ULink>
+    </div>
   </header>
 </template>
 

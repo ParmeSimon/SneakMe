@@ -20,3 +20,25 @@
     position: fixed;
     background-color: #0866FF;
 }
+
+.expendHover:hover{
+    background-color: #0155DC;
+}
+
+.expendHover:hover + .subMenu,
+.subMenu:hover{
+    display: block;
+}
+
+.subMenu{
+    display: none;
+    position: fixed;
+    left: 150px;
+    top: 296px
+}
+
+.subMenuButton{
+    width: 120px;
+    display: flex;
+    flex-direction: column;
+}
