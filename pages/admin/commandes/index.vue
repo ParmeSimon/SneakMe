@@ -1,5 +1,6 @@
 <script setup>
 import {ref, h, onMounted} from "vue";
+import CommandeStatusModal from '~/components/modal/CommandeStatusModal.vue';
 import '~/assets/css/admin.css'
 definePageMeta({
   layout: 'admin'
@@ -72,13 +73,10 @@ onBeforeMount(async () => {
 
 const rawData = ref([])
 const data = ref([])
-const expandedOrders = ref({})
 const loading = ref(false)
 const processingOrders = ref({})
-
-function toggleExpand(orderId) {
-  expandedOrders.value[orderId] = !expandedOrders.value[orderId]
-}
+const statusModalOpen = ref(false)
+const selectedCommande = ref(null)
 
 async function fetchCommandes() {
   loading.value = true
@@ -87,28 +85,35 @@ async function fetchCommandes() {
     const response = await fetch(`http://localhost/sneakme/api/commandes.php?t=${new Date().getTime()}`)
     
     if (response.ok) {
-      rawData.value = await response.json()
-      console.log('Données de commandes reçues:', rawData.value)
+      const responseData = await response.json()
+      console.log('Données de commandes reçues:', responseData)
       
-      data.value = rawData.value.map(commande => {
-        if (expandedOrders.value[commande.id_commande] === undefined) {
-          expandedOrders.value[commande.id_commande] = false
-        }
+      // Vérifier si responseData est un tableau
+      if (Array.isArray(responseData)) {
+        rawData.value = responseData
         
-        let statut = 'En cours'
-        if (commande.terminer == 1) statut = 'Terminée'
-        if (commande.terminer == -1) statut = 'Annulée'
-        
-        return {
-          id_commande: commande.id_commande,
-          client: `${commande.prenom} ${commande.nom}`,
-          created_at: new Date(commande.created_at).toLocaleDateString(),
-          statut: statut,
-          terminer: commande.terminer,
-          produits_list: commande.produits.map(p => p.title).join(', '),
-          produits: commande.produits
-        }
-      })
+        data.value = rawData.value.map(commande => {
+          
+          let statut = 'En cours'
+          if (commande.state == 'Terminée') statut = 'Terminée'
+          if (commande.state == 'Annulée') statut = 'Annulée'
+          
+          return {
+            id_commande: commande.id,
+            client: `${commande.prenom} ${commande.nom}`,
+            created_at: new Date(commande.created_at).toLocaleDateString(),
+            statut: statut,
+            state: commande.state,
+            produits_list: commande.produits && Array.isArray(commande.produits) ? commande.produits.map(p => p.title).join(', ') : '',
+            produits: commande.produits || []
+          }
+        })
+      } else {
+        // Si ce n'est pas un tableau, initialiser avec un tableau vide
+        console.error("La réponse de l'API n'est pas un tableau:", responseData)
+        rawData.value = []
+        data.value = []
+      }
     } else {
       console.error("Erreur HTTP lors du chargement des commandes:", response.status)
       alert("Erreur lors du chargement des commandes: " + response.statusText)
@@ -121,18 +126,18 @@ async function fetchCommandes() {
   }
 }
 
-async function updateStatut(id, terminer, newValue) {
+async function updateStatut(id, oldState, newValue) {
   if (processingOrders.value[id]) return
   
   processingOrders.value[id] = true
   try {
-    // Ajouter un timestamp pour éviter le cache et les problèmes CORS
-    const response = await fetch(`http://localhost/sneakme/api/commandes.php?id=${id}&t=${new Date().getTime()}`, {
+    // Utiliser des paramètres d'URL pour envoyer les données au lieu du corps JSON
+    const response = await fetch(`http://localhost/sneakme/api/commandes.php?id=${id}&state=${encodeURIComponent(newValue)}&t=${new Date().getTime()}`, {
       method: 'PUT',
       headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ terminer: newValue !== undefined ? newValue : (terminer == 1 ? 0 : 1) })
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
+      // Pas de corps JSON, les données sont dans l'URL
     })
     
     const result = await response.json()
@@ -151,10 +156,18 @@ async function updateStatut(id, terminer, newValue) {
   }
 }
 
-function annulerCommande(id) {
-  if (confirm("Êtes-vous sûr de vouloir annuler cette commande ?")) {
-    updateStatut(id, null, -1)
-  }
+function openStatusModal(commande) {
+  selectedCommande.value = commande
+  statusModalOpen.value = true
+}
+
+function handleStatusUpdate(data) {
+  updateStatut(data.id, null, data.status)
+  statusModalOpen.value = false
+}
+
+function closeStatusModal() {
+  statusModalOpen.value = false
 }
 
 onMounted(() => {
@@ -192,35 +205,19 @@ onMounted(() => {
             <strong>Date:</strong> {{ commande.created_at }}
           </div>
           <div class="commande-actions">
-            <button class="icon-btn" @click="toggleExpand(commande.id_commande)" :title="expandedOrders[commande.id_commande] ? 'Masquer les produits' : 'Voir les produits'">
-              <i :class="expandedOrders[commande.id_commande] ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+            <button 
+              class="icon-btn btn-status"
+              @click="openStatusModal(commande)"
+              :disabled="processingOrders[commande.id_commande]"
+              title="Modifier le statut"
+            >
+              <UIcon v-if="!processingOrders[commande.id_commande]" name="i-heroicons-pencil-square" />
+              <UIcon v-else name="i-heroicons-arrow-path" class="animate-spin" />
             </button>
-            
-            <template v-if="commande.terminer != -1">
-              <button 
-                :class="['icon-btn', commande.statut === 'Terminée' ? 'btn-annuler' : 'btn-terminer']"
-                @click="updateStatut(commande.id_commande, commande.terminer)"
-                :disabled="processingOrders[commande.id_commande]"
-                :title="commande.statut === 'Terminée' ? 'Marquer comme en cours' : 'Marquer comme terminée'"
-              >
-                <i v-if="!processingOrders[commande.id_commande]" :class="commande.statut === 'Terminée' ? 'fas fa-times' : 'fas fa-check'"></i>
-                <i v-else class="fas fa-spinner fa-spin"></i>
-              </button>
-              
-              <button 
-                class="icon-btn btn-cancel"
-                @click="annulerCommande(commande.id_commande)"
-                :disabled="processingOrders[commande.id_commande]"
-                title="Annuler la commande"
-              >
-                <i v-if="!processingOrders[commande.id_commande]" class="fas fa-trash-alt"></i>
-                <i v-else class="fas fa-spinner fa-spin"></i>
-              </button>
-            </template>
           </div>
         </div>
         
-        <div v-if="expandedOrders[commande.id_commande]" class="commande-produits">
+        <div class="commande-produits">
           <h3>Produits</h3>
           <div class="produits-grid">
             <div v-for="produit in commande.produits" :key="produit.id_produit" class="produit-item">
@@ -228,6 +225,24 @@ onMounted(() => {
               <div class="produit-details">
                 <div class="produit-title">{{ produit.title }}</div>
                 <div class="produit-price">{{ produit.price }} €</div>
+                <div class="produit-info">
+                  <div class="info-item" v-if="produit.categorie">
+                    <span class="info-label">Catégorie:</span>
+                    <span class="info-value">{{ produit.categorie }}</span>
+                  </div>
+                  <div class="info-item" v-if="produit.couleur">
+                    <span class="info-label">Couleur:</span>
+                    <span class="info-value">{{ produit.couleur }}</span>
+                  </div>
+                  <div class="info-item" v-if="produit.pointure">
+                    <span class="info-label">Pointure:</span>
+                    <span class="info-value">{{ produit.pointure }}</span>
+                  </div>
+                  <div class="info-item" v-if="produit.sexe">
+                    <span class="info-label">Sexe:</span>
+                    <span class="info-value">{{ produit.sexe }}</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -235,6 +250,14 @@ onMounted(() => {
       </div>
     </div>
   </div>
+  
+  <!-- Modal pour modifier le statut de la commande -->
+  <CommandeStatusModal 
+    :is-open="statusModalOpen" 
+    :commande="selectedCommande" 
+    @close="closeStatusModal" 
+    @update="handleStatusUpdate"
+  />
 </template>
 
 <style scoped>
@@ -353,8 +376,35 @@ onMounted(() => {
 }
 
 .produit-price {
-  color: #e63946;
   font-weight: bold;
+  color: #3498db;
+  margin-bottom: 8px;
+}
+
+.produit-info {
+  margin-top: 8px;
+  font-size: 0.9rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  background-color: #f8f9fa;
+  padding: 6px;
+  border-radius: 4px;
+}
+
+.info-label {
+  font-weight: 600;
+  color: #555;
+  font-size: 0.8rem;
+}
+
+.info-value {
+  color: #333;
 }
 
 .commande-actions {
@@ -394,6 +444,15 @@ onMounted(() => {
 
 .btn-cancel {
   background-color: #6c757d;
+}
+
+.btn-status {
+  background-color: #4299e1;
+  color: white;
+}
+
+.btn-status:hover {
+  background-color: #3182ce;
 }
 
 .icon-btn:first-child:hover:not(:disabled) {

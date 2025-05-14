@@ -47,7 +47,7 @@ const submitForm = () => {
     <div class="modal-container">
       <div class="modal-header">
         <h3>{{ isEditing ? 'Modifier' : 'Ajouter' }} une catégorie</h3>
-        <button class="modal-close" @click="$emit('close')">&times;</button>
+        <button class="modal-close" @click="$emit('close')"><UIcon name="i-heroicons-x-mark" /></button>
       </div>
       <div class="modal-body">
         <form @submit.prevent="submitForm">

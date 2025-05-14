@@ -49,89 +49,113 @@
         </div>
     </div>
     
-    <!-- Liste horizontale des produits -->
-    <div class="overflow-x-auto pb-4">
-        <div class="flex space-x-6 p-4" style="min-width: max-content;">
-        <div v-for="groupe in produitsFiltres" :key="groupe.title" 
-            class="product-card bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden transition-transform duration-300 hover:shadow-xl hover:-translate-y-1"
-            style="min-width: 280px; max-width: 320px;">
-            <!-- Image avec badge de catégorie -->
-            <div class="relative">
-                <img :src="groupe.url_image" :alt="groupe.title" class="w-full h-56 object-cover">
-                <span class="absolute top-3 right-3 bg-primary-500 text-white text-xs font-semibold px-2 py-1 rounded-full">
-                    {{ groupe.categorie_label }}
-                </span>
-            </div>
-            
-            <!-- Contenu de la carte -->
-            <div class="p-4">
-                <!-- Titre et prix -->
-                <div class="flex justify-between items-start mb-2">
-                    <h2 class="text-lg font-bold text-gray-900 dark:text-white truncate">{{ groupe.title }}</h2>
-                    <span class="text-lg font-bold text-primary-600 dark:text-primary-400">{{ groupe.price / 100 }}€</span>
-                </div>
+    <!-- Affichage des produits -->    
+    <div class="pb-8">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6 p-4">
+            <!-- Carte produit -->            
+            <div v-for="groupe in produitsFiltres" :key="groupe.title" 
+                class="product-card bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 flex flex-col h-full">
                 
-                <!-- Description -->
-                <p class="text-sm text-gray-600 dark:text-gray-300 mb-3 line-clamp-2">{{ groupe.description }}</p>
-                
-                <!-- Caractéristiques -->
-                <div class="flex flex-wrap gap-2 mb-4">
-                    <!-- Sexe -->
-                    <span class="inline-flex items-center bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 text-xs px-2 py-1 rounded-full">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                        {{ groupe.sexe_label }}
+                <!-- Image avec badge et favoris -->
+                <div class="relative overflow-hidden group">
+                    <img 
+                        :src="groupe.url_image" 
+                        :alt="groupe.title" 
+                        class="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-105"
+                    >
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <span class="absolute top-3 left-3 bg-primary-500 text-white text-xs font-semibold px-3 py-1.5 rounded-full shadow-md">
+                        {{ groupe.categorie_label }}
                     </span>
-                    
-                    <!-- Couleur -->
-                    <span class="inline-flex items-center bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 text-xs px-2 py-1 rounded-full">
-                        <span class="w-2 h-2 rounded-full mr-1" :style="{ backgroundColor: couleurLabel(groupe.couleur_label) }"></span>
-                        {{ groupe.couleur_label }}
-                    </span>
-                    
-                    <!-- Dropdown de pointures -->
-                    <div class="relative w-full mt-2">
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Pointure disponible :</label>
-                        <select 
-                            v-model="selectedPointures[groupe.title]" 
-                            class="w-full bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 text-sm px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary-500">
-                            <option v-for="pointure in groupe.pointures" :key="pointure" :value="pointure">{{ pointure }}</option>
-                        </select>
+                    <div class="absolute top-3 right-3 flex space-x-2">
+                        <span class="bg-white/90 dark:bg-gray-800/90 text-primary-600 dark:text-primary-400 font-bold px-3 py-1.5 rounded-full shadow-md backdrop-blur-sm">
+                            {{ groupe.price / 100 }}€
+                        </span>
                     </div>
                 </div>
                 
-                <!-- Bouton d'action -->
-                <div class="flex justify-center gap-2">
-                    <button 
-                        @click="addProduct(getActiveProduct(groupe, selectedPointures[groupe.title]))" 
-                        class="w-full bg-primary-500 hover:bg-primary-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                        </svg>
-                        Ajouter au panier
-                    </button>
-                    <button 
-                        @click="handleViewProduct(groupe, selectedPointures[groupe.title])" 
-                        class="w-full bg-primary-500 hover:bg-primary-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-box-arrow-up-right" viewBox="0 0 16 16">
-                            <path fill-rule="evenodd" d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5z"/>
-                            <path fill-rule="evenodd" d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0v-5z"/>
-                        </svg>
-                        Voir
-                    </button>
-                </div>
-
-                <div class="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                    <span>ID Produit : {{ getProductId(groupe, selectedPointures[groupe.title]) }}</span>
-                    <br>
-                    <span>{{ groupe.variants.length }} variante(s) disponible(s)</span>
+                <!-- Contenu de la carte -->
+                <div class="p-5 flex-grow flex flex-col">
+                    <!-- Titre -->                    
+                    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-2 line-clamp-1">{{ groupe.title }}</h2>
+                    
+                    <!-- Description -->
+                    <p class="text-sm text-gray-600 dark:text-gray-300 mb-4 line-clamp-2 flex-grow">{{ groupe.description }}</p>
+                    
+                    <!-- Caractéristiques -->
+                    <div class="flex flex-wrap gap-2 mb-4">
+                        <!-- Sexe -->
+                        <span class="inline-flex items-center bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 text-xs px-2.5 py-1.5 rounded-full">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                            {{ groupe.sexe_label }}
+                        </span>
+                        
+                        <!-- Couleur -->
+                        <span class="inline-flex items-center bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 text-xs px-2.5 py-1.5 rounded-full">
+                            <span class="w-3 h-3 rounded-full mr-1.5" :style="{ backgroundColor: couleurLabel(groupe.couleur_label) }"></span>
+                            {{ groupe.couleur_label }}
+                        </span>
+                    </div>
+                    
+                    <!-- Dropdown de pointures -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Pointure :</label>
+                        <select 
+                            v-model="selectedPointures[groupe.title]" 
+                            class="w-full bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 text-sm px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all">
+                            <option v-for="pointure in groupe.pointures" :key="pointure" :value="pointure">{{ pointure }}</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Boutons d'action -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <button 
+                            @click="handleViewProduct(groupe, selectedPointures[groupe.title])" 
+                            class="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-medium py-2.5 px-4 rounded-lg transition-all duration-200 flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                            Voir
+                        </button>
+                        <button 
+                            @click="addProduct(getActiveProduct(groupe, selectedPointures[groupe.title]))" 
+                            class="bg-primary-500 hover:bg-primary-600 text-white font-medium py-2.5 px-4 rounded-lg transition-all duration-200 flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
+                            Ajouter
+                        </button>
+                    </div>
+                    
+                    <!-- Infos supplémentaires -->                    
+                    <div class="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 text-xs text-gray-500 dark:text-gray-400 flex justify-between">
+                        <span>ID: {{ getProductId(groupe, selectedPointures[groupe.title]) }}</span>
+                        <span>{{ groupe.variants.length }} variante(s)</span>
+                    </div>
                 </div>
             </div>
-        </div>
+            
+            <!-- Message si aucun produit -->            
+            <div v-if="produitsFiltres.length === 0" class="col-span-full py-12 text-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-gray-400 dark:text-gray-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">Aucun produit trouvé</h3>
+                <p class="text-gray-600 dark:text-gray-400 mb-4">Essayez de modifier vos filtres pour voir plus de produits.</p>
+                <button 
+                    @click="resetFiltres" 
+                    class="inline-flex items-center bg-primary-500 hover:bg-primary-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Réinitialiser les filtres
+                </button>
+            </div>
         </div>
     </div>
-    <UPagination v-model="page" :items-per-page="6" :total="produitsFiltres.length" :sibling-count="1"/>
 </template>
 
 <script setup>
@@ -496,11 +520,16 @@ const handleViewProduct = (groupe, pointure) => {
   flex-direction: column;
   height: 100%;
   flex-shrink: 0;
+  backface-visibility: hidden;
+  will-change: transform;
+  border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
-.product-card:hover img {
-  transform: scale(1.05);
-  transition: transform 0.5s ease;
+.line-clamp-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .line-clamp-2 {
@@ -508,5 +537,30 @@ const handleViewProduct = (groupe, pointure) => {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .product-card {
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 90%;
+  }
+}
+
+/* Hover effects */
+.product-card button {
+  transform: translateY(0);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.product-card button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Dark mode adjustments */
+.dark .product-card {
+  border-color: rgba(255, 255, 255, 0.05);
 }
 </style>

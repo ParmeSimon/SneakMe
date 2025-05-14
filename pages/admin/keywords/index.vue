@@ -169,11 +169,13 @@ const updateKeyword = async () => {
       // Rafraîchir les données
       await refreshKeywords()
       
-      // Fermer le modal après 1 seconde
+      // Fermer le modal immédiatement
+      showEditModal.value = false
+      
+      // Effacer le message après un délai
       setTimeout(() => {
-        showEditModal.value = false
         formStatus.value.message = ''
-      }, 1000)
+      }, 2000)
     } else {
       formStatus.value.message = result.message || 'Erreur lors de la modification'
       formStatus.value.isError = true
@@ -261,11 +263,13 @@ const submitKeyword = async () => {
         result: ''
       }
       
-      // Fermer le modal après 1 seconde
+      // Fermer le modal immédiatement
+      showAddModal.value = false
+      
+      // Effacer le message après un délai
       setTimeout(() => {
-        showAddModal.value = false
         formStatus.value.message = ''
-      }, 1000)
+      }, 2000)
     } else {
       // Afficher l'erreur
       formStatus.value.message = result.message || 'Erreur lors de l\'ajout du mot-clé'
@@ -360,7 +364,8 @@ const submitKeyword = async () => {
       <!-- Message de statut -->
       <UAlert 
         v-if="formStatus.message" 
-        :variant="formStatus.isError ? 'destructive' : 'success'"
+        :variant="formStatus.isError ? 'solid' : 'soft'"
+        :color="formStatus.isError ? 'red' : 'green'"
         class="mb-4"
       >
         {{ formStatus.message }}
@@ -376,7 +381,7 @@ const submitKeyword = async () => {
         </UFormGroup>
         
         <UFormGroup label="Résultat" name="result">
-          <UTextarea v-model="newKeyword.result" rows="3" placeholder="Résultat affiché quand l'utilisateur saisit ce mot clé" required />
+          <UTextarea v-model="newKeyword.result" placeholder="Résultat affiché quand l'utilisateur saisit ce mot clé" required />
         </UFormGroup>
       </form>
       
@@ -419,7 +424,8 @@ const submitKeyword = async () => {
       <!-- Message de statut -->
       <UAlert 
         v-if="formStatus.message" 
-        :variant="formStatus.isError ? 'destructive' : 'success'"
+        :variant="formStatus.isError ? 'solid' : 'soft'"
+        :color="formStatus.isError ? 'red' : 'green'"
         class="mb-4"
       >
         {{ formStatus.message }}
@@ -435,7 +441,7 @@ const submitKeyword = async () => {
         </UFormGroup>
         
         <UFormGroup label="Résultat" name="result">
-          <UTextarea v-model="keywordToEdit.result" rows="3" placeholder="Résultat affiché quand l'utilisateur saisit ce mot clé" required />
+          <UTextarea v-model="keywordToEdit.result" placeholder="Résultat affiché quand l'utilisateur saisit ce mot clé" required />
         </UFormGroup>
       </form>
       

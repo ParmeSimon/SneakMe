@@ -82,11 +82,25 @@ if (isGetRequest()) {
         $stmt->execute($params);
         $commandes = $stmt->fetchAll();
         
-        // Pour chaque commande, récupérer ses items
+        // Pour chaque commande, récupérer ses produits avec toutes les informations
         foreach ($commandes as &$commande) {
             $stmt = $db->prepare("
-                SELECT i.*, p.title as produit_title, p.price, p.url_image, 
-                       c.label as categorie, co.label as couleur, po.label as pointure, s.label as sexe
+                SELECT 
+                    i.id as item_id,
+                    i.id_commande,
+                    p.id as id_produit,
+                    p.title,
+                    p.description,
+                    p.price,
+                    p.url_image,
+                    c.id as categorie_id,
+                    c.label as categorie,
+                    co.id as couleur_id,
+                    co.label as couleur,
+                    po.id as pointure_id,
+                    po.label as pointure,
+                    s.id as sexe_id,
+                    s.label as sexe
                 FROM items i
                 JOIN produits p ON i.id_produit = p.id
                 LEFT JOIN categories c ON p.id_categorie = c.id
@@ -96,9 +110,15 @@ if (isGetRequest()) {
                 WHERE i.id_commande = ?
             ");
             $stmt->execute([$commande['id']]);
-            $items = $stmt->fetchAll();
+            $produits = $stmt->fetchAll();
             
-            $commande['items'] = $items;
+            // Renommer la clé pour plus de clarté
+            $commande['produits'] = $produits;
+            
+            // Supprimer la clé items si elle existe pour éviter la confusion
+            if (isset($commande['items'])) {
+                unset($commande['items']);
+            }
         }
         
         sendJsonResponse($commandes);
@@ -185,6 +205,66 @@ if (isGetRequest()) {
         // En cas d'erreur, annuler la transaction
         $db->rollBack();
         sendJsonResponse(['error' => 'Erreur lors de la création de la commande: ' . $e->getMessage()], 500);
+    }
+} elseif (isPutRequest()) {
+    // Mise à jour d'une commande
+    if (!isset($_GET['id'])) {
+        sendJsonResponse(['error' => 'ID commande non spécifié'], 400);
+    }
+    
+    $commandeId = $_GET['id'];
+    $data = getRequestData();
+    
+    // Débogage des données reçues
+    error_log('Données brutes reçues: ' . file_get_contents('php://input'));
+    error_log('Données traitées: ' . json_encode($data));
+    error_log('Paramètres URL: ' . json_encode($_GET));
+    
+    // Si aucune donnée n'a été reçue dans le corps, essayer de récupérer le statut depuis les paramètres d'URL
+    if (empty($data) && isset($_GET['state'])) {
+        $data['state'] = $_GET['state'];
+    }
+    
+    // Si les données sont toujours vides, essayer de parser manuellement le corps de la requête
+    if (empty($data)) {
+        $rawInput = file_get_contents('php://input');
+        if (!empty($rawInput)) {
+            $data = json_decode($rawInput, true) ?: [];
+            error_log('Données parsées manuellement: ' . json_encode($data));
+        }
+    }
+    
+    // Vérifier si la commande existe
+    $stmt = $db->prepare("SELECT * FROM commandes WHERE id = ?");
+    $stmt->execute([$commandeId]);
+    $commande = $stmt->fetch();
+    
+    if (!$commande) {
+        sendJsonResponse(['error' => 'Commande non trouvée'], 404);
+    }
+    
+    // Mise à jour du statut de la commande
+    if (isset($data['state'])) {
+        try {
+            $stmt = $db->prepare("UPDATE commandes SET state = ? WHERE id = ?");
+            $stmt->execute([$data['state'], $commandeId]);
+            
+            // Récupérer la commande mise à jour
+            $stmt = $db->prepare("
+                SELECT c.*, u.username, u.nom, u.prenom, u.email 
+                FROM commandes c
+                JOIN users u ON c.id_user = u.id
+                WHERE c.id = ?
+            ");
+            $stmt->execute([$commandeId]);
+            $updatedCommande = $stmt->fetch();
+            
+            sendJsonResponse(['success' => true, 'message' => 'Statut de la commande mis à jour avec succès', 'data' => $updatedCommande]);
+        } catch (Exception $e) {
+            sendJsonResponse(['error' => 'Erreur lors de la mise à jour du statut: ' . $e->getMessage()], 500);
+        }
+    } else {
+        sendJsonResponse(['error' => 'Aucune donnée de mise à jour fournie'], 400);
     }
 } elseif (isDeleteRequest()) {
     // Suppression d'une commande

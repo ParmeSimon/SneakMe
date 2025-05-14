@@ -6,41 +6,42 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
-  couleur: {
+  commande: {
     type: Object,
-    default: () => ({ id: null, label: '' })
-  },
-  isEditing: {
-    type: Boolean,
-    default: false
-  },
-  errorMessage: {
-    type: String,
-    default: ''
+    default: () => ({ id_commande: null, statut: '' })
   }
 });
 
-const emit = defineEmits(['close', 'save']);
+const emit = defineEmits(['close', 'update']);
 
-const formData = ref({
-  id: props.couleur.id,
-  label: props.couleur.label || ''
-});
+const selectedStatus = ref('');
 
-watch(() => props.couleur, (newValue) => {
-  formData.value = {
-    id: newValue.id,
-    label: newValue.label || ''
-  };
+watch(() => props.commande, (newValue) => {
+  if (newValue && newValue.statut) {
+    if (newValue.statut === 'Terminée') {
+      selectedStatus.value = 'Terminée';
+    } else if (newValue.statut === 'Annulée') {
+      selectedStatus.value = 'Annulée';
+    } else {
+      selectedStatus.value = 'En cours';
+    }
+  }
 }, { deep: true });
 
-const submitForm = () => {
-  if (!formData.value.label.trim()) {
-    return;
+watch(() => props.isOpen, (isOpen) => {
+  if (isOpen && props.commande && props.commande.statut) {
+    if (props.commande.statut === 'Terminée') {
+      selectedStatus.value = 'Terminée';
+    } else if (props.commande.statut === 'Annulée') {
+      selectedStatus.value = 'Annulée';
+    } else {
+      selectedStatus.value = 'En cours';
+    }
   }
-  
-  emit('save', { ...formData.value });
-  // Le modal reste ouvert si une erreur survient
+});
+
+const submitForm = () => {
+  emit('update', { id: props.commande.id_commande, state: selectedStatus.value });
 };
 </script>
 
@@ -48,20 +49,18 @@ const submitForm = () => {
   <div v-if="isOpen" class="modal-overlay">
     <div class="modal-container">
       <div class="modal-header">
-        <h3>{{ isEditing ? 'Modifier' : 'Ajouter' }} une couleur</h3>
+        <h3>Modifier le statut de la commande #{{ commande.id_commande }}</h3>
         <button class="modal-close" @click="$emit('close')"><UIcon name="i-heroicons-x-mark" /></button>
       </div>
       <div class="modal-body">
         <form @submit.prevent="submitForm">
           <div class="form-group">
-            <label for="color-name">Nom de la couleur</label>
-            <input
-              id="color-name"
-              v-model="formData.label"
-              type="text"
-              placeholder="Entrez la couleur"
-              required
-            />
+            <label for="status">Statut de la commande</label>
+            <select id="status" v-model="selectedStatus" class="status-select">
+              <option value="En cours">En cours</option>
+              <option value="Terminée">Terminée</option>
+              <option value="Annulée">Annulée</option>
+            </select>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn-cancel" @click="$emit('close')">Annuler</button>
@@ -100,13 +99,13 @@ const submitForm = () => {
   justify-content: space-between;
   align-items: center;
   padding: 16px;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .modal-header h3 {
   margin: 0;
   font-size: 1.25rem;
-  color: #111827;
+  font-weight: 600;
 }
 
 .modal-close {
@@ -114,7 +113,7 @@ const submitForm = () => {
   border: none;
   font-size: 1.5rem;
   cursor: pointer;
-  color: #6b7280;
+  color: #718096;
 }
 
 .modal-body {
@@ -129,58 +128,50 @@ const submitForm = () => {
   display: block;
   margin-bottom: 8px;
   font-weight: 500;
-  color: #374151;
 }
 
-.form-group input {
+.status-select {
   width: 100%;
   padding: 8px 12px;
-  border: 1px solid #d1d5db;
+  border: 1px solid #e2e8f0;
   border-radius: 4px;
   font-size: 1rem;
+  margin-bottom: 16px;
 }
 
 .modal-footer {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
-  margin-top: 24px;
-}
-
-.btn-cancel, .btn-save {
-  padding: 8px 16px;
-  border-radius: 4px;
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: background-color 0.2s;
+  padding-top: 16px;
+  border-top: 1px solid #e2e8f0;
 }
 
 .btn-cancel {
-  background-color: white;
-  border: 1px solid #d1d5db;
-  color: #374151;
+  padding: 8px 16px;
+  background-color: #e2e8f0;
+  color: #4a5568;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
 }
 
 .btn-save {
-  background-color: #4f46e5;
-  border: 1px solid #4f46e5;
+  padding: 8px 16px;
+  background-color: #3182ce;
   color: white;
-}
-
-.btn-cancel:hover {
-  background-color: #f3f4f6;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
 }
 
 .btn-save:hover {
-  background-color: #4338ca;
+  background-color: #2c5282;
 }
 
-.error-message {
-  background-color: #fee2e2;
-  border-left: 4px solid #ef4444;
-  color: #b91c1c;
-  padding: 10px;
-  margin-bottom: 15px;
-  border-radius: 4px;
+.btn-cancel:hover {
+  background-color: #cbd5e0;
 }
-</style> 
+</style>

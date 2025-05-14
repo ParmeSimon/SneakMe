@@ -76,12 +76,12 @@
                     <!-- Contenu de la commande -->
                     <div class="space-y-3">
                         <!-- Liste des produits -->
-                        <div v-for="item in commande.items" :key="item.id" class="flex items-center py-2 border-b border-gray-100 dark:border-gray-700 last:border-0">
+                        <div v-for="item in commande.produits" :key="item.item_id" class="flex items-center py-2 border-b border-gray-100 dark:border-gray-700 last:border-0">
                             <div class="flex-shrink-0 w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded overflow-hidden mr-3">
                                 <img 
                                     v-if="item.url_image" 
                                     :src="item.url_image" 
-                                    :alt="item.produit_title" 
+                                    :alt="item.title" 
                                     class="w-full h-full object-cover"
                                 />
                                 <div v-else class="w-full h-full flex items-center justify-center text-gray-400 dark:text-gray-600">
@@ -89,12 +89,12 @@
                                 </div>
                             </div>
                             <div class="flex-grow">
-                                <h4 class="font-medium">{{ item.produit_title }}</h4>
+                                <h4 class="font-medium">{{ item.title }}</h4>
                                 <div class="flex flex-wrap gap-2 mt-1">
-                                    <UBadge v-if="item.categorie" color="gray" variant="soft" size="xs">{{ item.categorie }}</UBadge>
-                                    <UBadge v-if="item.couleur" color="gray" variant="soft" size="xs">{{ item.couleur }}</UBadge>
-                                    <UBadge v-if="item.pointure" color="gray" variant="soft" size="xs">Pointure: {{ item.pointure }}</UBadge>
-                                    <UBadge v-if="item.sexe" color="gray" variant="soft" size="xs">{{ item.sexe }}</UBadge>
+                                    <UBadge size="xs" color="gray">{{ item.categorie }}</UBadge>
+                                    <UBadge size="xs" color="gray">{{ item.couleur }}</UBadge>
+                                    <UBadge size="xs" color="gray">Pointure: {{ item.pointure }}</UBadge>
+                                    <UBadge size="xs" color="gray">{{ item.sexe }}</UBadge>
                                 </div>
                             </div>
                             <div class="flex-shrink-0 font-medium">
@@ -105,7 +105,7 @@
                         <!-- Total de la commande -->
                         <div class="flex justify-between items-center pt-2 font-semibold">
                             <span>Total</span>
-                            <span>{{ formatPrice(calculateTotal(commande.items)) }}</span>
+                            <span>{{ formatPrice(calculateTotal(commande.produits)) }}</span>
                         </div>
                     </div>
 
@@ -114,19 +114,19 @@
                         <div class="flex justify-end space-x-2">
                             <!-- Bouton pour voir le premier produit de la commande -->
                             <UButton 
-                                v-if="commande.items && commande.items.length > 0"
+                                v-if="commande.produits && commande.produits.length > 0"
                                 color="primary" 
                                 variant="soft" 
                                 size="sm"
-                                @click="() => emit('send-message', `Voir produit ${commande.items[0].id_produit}`)"
+                                @click="() => emit('send-message', `Voir produit ${commande.produits[0].id_produit}`)"
                             >
                                 Revoir le produit
                             </UButton>
                             
                             <!-- Boutons pour les autres produits -->
-                            <template v-if="commande.items && commande.items.length > 1">
+                            <template v-if="commande.produits && commande.produits.length > 1">
                                 <UButton 
-                                    v-for="(item, index) in commande.items.slice(1)" 
+                                    v-for="(item, index) in commande.produits.slice(1)" 
                                     :key="index"
                                     color="gray" 
                                     variant="soft" 
@@ -238,6 +238,10 @@ function formatPrice(price) {
 
 // Calculer le total d'une commande (les prix sont en centimes)
 function calculateTotal(items) {
+    // Vérifier que items est un tableau avant d'appeler reduce
+    if (!items || !Array.isArray(items)) {
+        return 0;
+    }
     // Somme des prix en centimes
     const totalCents = items.reduce((total, item) => total + parseFloat(item.price), 0);
     // Pas besoin de convertir en euros ici car formatPrice s'en chargera

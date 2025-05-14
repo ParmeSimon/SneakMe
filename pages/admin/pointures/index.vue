@@ -179,11 +179,11 @@ onMounted(() => {
         <!-- Messages d'alerte -->
         <div v-if="errorMessage" class="alert alert-error">
             <span>{{ errorMessage }}</span>
-            <button class="close-btn" @click="errorMessage = ''">×</button>
+            <button class="close-btn" @click="errorMessage = ''"><UIcon name="i-heroicons-x-mark" /></button>
         </div>
         <div v-if="successMessage" class="alert alert-success">
             <span>{{ successMessage }}</span>
-            <button class="close-btn" @click="successMessage = ''">×</button>
+            <button class="close-btn" @click="successMessage = ''"><UIcon name="i-heroicons-x-mark" /></button>
         </div>
         
         <div class="pointure-grid">
