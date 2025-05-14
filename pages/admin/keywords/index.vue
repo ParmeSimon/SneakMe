@@ -96,7 +96,7 @@ const showEditModal = ref(false)
 const refreshKeywords = async () => {
   try {
     // Utiliser fetch sans en-têtes spéciaux pour éviter les problèmes CORS
-    const response = await fetch('http://localhost/sneakme/api/actions.php?' + new Date().getTime(), {
+    const response = await fetch('http://localhost/sneakme/api/actions.php', {
       method: 'GET'
     })
     
@@ -161,8 +161,9 @@ const updateKeyword = async () => {
     })
     
     const result = await response.json()
+    console.log("Données reçues:", result)
     
-    if (response.ok && result.success) {
+    if (response.ok) {
       formStatus.value.message = result.message || 'Mot-clé modifié avec succès!'
       formStatus.value.isError = false
       
@@ -203,7 +204,7 @@ const deleteKeyword = async (keyword) => {
     
     const result = await response.json()
     
-    if (response.ok && result.success) {
+    if (response.ok) {
       alert(result.message || 'Mot-clé supprimé avec succès!')
       
       // Rafraîchir les données
@@ -248,7 +249,7 @@ const submitKeyword = async () => {
     
     const result = await response.json()
     
-    if (response.ok && result.success) {
+    if (response.ok) {
       // Afficher le message de succès
       formStatus.value.message = result.message || 'Mot-clé ajouté avec succès!'
       formStatus.value.isError = false

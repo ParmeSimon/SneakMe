@@ -201,7 +201,7 @@ const updateProduct = async () => {
     
     const result = await response.json()
     
-    if (response.ok && result.success) {
+    if (response.ok) {
       formStatus.value.message = result.message || 'Produit modifié avec succès!'
       formStatus.value.isError = false
       
@@ -240,7 +240,7 @@ const deleteProduct = async (product) => {
     
     const result = await response.json()
     
-    if (response.ok && result.success) {
+    if (response.ok) {
       alert(result.message || 'Produit supprimé avec succès!')
       
       // Rafraîchir les données
@@ -364,14 +364,14 @@ const submitProduct = async () => {
             <tr v-for="product in data" :key="product.id" class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{{ product.title }}</td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white max-w-xs truncate">{{ product.description }}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{{ product.couleur }}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{{ product.pointure }}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{{ product.price }} €</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{{ product.couleur_label }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{{ product.pointure_label }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{{ product.price / 100 }} €</td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                 <img :src="product.url_image" alt="Product image" class="h-14 w-14 object-cover rounded-md">
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{{ product.categorie }}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{{ product.sexe }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{{ product.categorie_label }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{{ product.sexe_label }}</td>
               <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                 <div class="flex justify-center space-x-2">
                   <button 
@@ -441,7 +441,7 @@ const submitProduct = async () => {
         <UFormGroup label="Couleur" name="id_couleur">
           <USelect 
             v-model="newProduct.id_couleur" 
-            :options="couleurs.map(c => ({label: c.nom, value: Number(c.id)}))" 
+            :options="couleurs.map(c => ({label: c.label, value: Number(c.id)}))" 
             placeholder="Sélectionner une couleur"
             required
           />
@@ -450,7 +450,7 @@ const submitProduct = async () => {
         <UFormGroup label="Pointure" name="id_pointure">
           <USelect 
             v-model="newProduct.id_pointure" 
-            :options="pointures.map(p => ({label: p.nom, value: Number(p.id)}))" 
+            :options="pointures.map(p => ({label: p.label, value: Number(p.id)}))" 
             placeholder="Sélectionner une pointure"
             required
           />
@@ -461,7 +461,7 @@ const submitProduct = async () => {
         <UFormGroup label="Catégorie" name="id_categorie">
           <USelect 
             v-model="newProduct.id_categorie" 
-            :options="categories.map(c => ({label: c.nom, value: Number(c.id)}))" 
+            :options="categories.map(c => ({label: c.label, value: Number(c.id)}))" 
             placeholder="Sélectionner une catégorie"
             required
           />
@@ -470,7 +470,7 @@ const submitProduct = async () => {
         <UFormGroup label="Sexe" name="id_sexe">
           <USelect 
             v-model="newProduct.id_sexe" 
-            :options="sexes.map(s => ({label: s.nom, value: Number(s.id)}))" 
+            :options="sexes.map(s => ({label: s.label, value: Number(s.id)}))" 
             placeholder="Sélectionner un sexe"
             required
           />

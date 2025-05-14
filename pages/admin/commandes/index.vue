@@ -131,18 +131,18 @@ async function updateStatut(id, oldState, newValue) {
   
   processingOrders.value[id] = true
   try {
-    // Utiliser des paramètres d'URL pour envoyer les données au lieu du corps JSON
-    const response = await fetch(`http://localhost/sneakme/api/commandes.php?id=${id}&state=${encodeURIComponent(newValue)}&t=${new Date().getTime()}`, {
+    // Ajouter un timestamp pour éviter le cache et les problèmes CORS
+    const response = await fetch(`http://localhost/sneakme/api/commandes.php?id=${id}&t=${new Date().getTime()}`, {
       method: 'PUT',
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      }
-      // Pas de corps JSON, les données sont dans l'URL
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ state: newValue })
     })
     
     const result = await response.json()
     
-    if (response.ok && result.success) {
+    if (response.ok) {
       await fetchCommandes()
     } else {
       console.error("Erreur lors de la mise à jour du statut:", result.message || response.statusText)
@@ -162,7 +162,7 @@ function openStatusModal(commande) {
 }
 
 function handleStatusUpdate(data) {
-  updateStatut(data.id, null, data.status)
+  updateStatut(data.id, null, data.state)
   statusModalOpen.value = false
 }
 
@@ -224,7 +224,7 @@ onMounted(() => {
               <img :src="produit.url_image" :alt="produit.title" class="produit-image">
               <div class="produit-details">
                 <div class="produit-title">{{ produit.title }}</div>
-                <div class="produit-price">{{ produit.price }} €</div>
+                <div class="produit-price">{{ produit.price / 100 }} €</div>
                 <div class="produit-info">
                   <div class="info-item" v-if="produit.categorie">
                     <span class="info-label">Catégorie:</span>

@@ -189,7 +189,7 @@ const deleteUser = async (user) => {
     
     const result = await response.json()
     
-    if (response.ok && result.success) {
+    if (response.ok) {
       alert(result.message || 'Utilisateur supprimé avec succès!')
       
       // Rafraîchir les données
@@ -231,7 +231,7 @@ const submitUser = async () => {
     
     const result = await response.json()
     
-    if (response.ok && result.success) {
+    if (response.ok) {
       // Afficher le message de succès
       formStatus.value.message = result.message || 'Utilisateur ajouté avec succès!'
       formStatus.value.isError = false
